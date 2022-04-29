@@ -1,0 +1,45 @@
+// Copyright 2022 The wav authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import 'dart:io';
+import 'dart:math' as math;
+import 'dart:typed_data';
+import "package:path/path.dart" as path;
+import 'package:test/test.dart';
+import 'package:wav/wav.dart';
+
+void readTest(int bits, WavFormat format) {
+  test('Read ${bits}bit file', () async {
+    final filename = 'test/400Hz-${bits}bit.wav';
+    final wav = await Wav.readFile(filename);
+    expect(wav.samplesPerSecond, 8000);
+    expect(wav.format, format);
+    expect(wav.channels.length, 2);
+    expect(wav.channels[0].length, 101);
+    expect(wav.channels[1].length, 101);
+    final epsilon = 1.3 * math.pow(0.5, bits - 1);
+    for (int i = 0; i < wav.channels[0].length; ++i) {
+      final t = i * 2 * math.pi * 400 / 8000;
+      expect(wav.channels[0][i], closeTo(math.sin(t), epsilon));
+      expect(wav.channels[1][i], closeTo(math.cos(t), epsilon));
+    }
+  });
+}
+
+void main() async {
+  readTest(8, WavFormat.PCM_8bit);
+  readTest(16, WavFormat.PCM_16bit);
+  readTest(24, WavFormat.PCM_24bit);
+  readTest(32, WavFormat.PCM_32bit);
+}
