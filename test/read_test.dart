@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
-import "package:path/path.dart" as path;
 import 'package:test/test.dart';
 import 'package:wav/wav.dart';
 
@@ -38,8 +35,8 @@ void readTest(int bits, WavFormat format) {
 }
 
 void main() async {
-  readTest(8, WavFormat.PCM_8bit);
-  readTest(16, WavFormat.PCM_16bit);
-  readTest(24, WavFormat.PCM_24bit);
-  readTest(32, WavFormat.PCM_32bit);
+  readTest(8, WavFormat.pcm8bit);
+  readTest(16, WavFormat.pcm16bit);
+  readTest(24, WavFormat.pcm24bit);
+  readTest(32, WavFormat.pcm32bit);
 }

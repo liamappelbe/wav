@@ -15,14 +15,13 @@
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
-import "package:path/path.dart" as path;
 import 'package:test/test.dart';
 import 'package:wav/wav.dart';
 
 void writeTest(int bits, WavFormat format) {
   test('Write ${bits}bit file', () async {
     final filename = 'test/400Hz-${bits}bit.wav';
-    final tempFilename = filename + '.temp';
+    final tempFilename = '$filename.temp';
     final channels = [Float64List(101), Float64List(101)];
     for (int i = 0; i < 101; ++i) {
       final t = i * 2 * math.pi * 400 / 8000;
@@ -34,15 +33,15 @@ void writeTest(int bits, WavFormat format) {
 
     final expected = await File(filename).readAsBytes();
     final actual = await File(tempFilename).readAsBytes();
-    expect(expected, actual);
+    expect(actual, expected);
 
     await File(tempFilename).delete();
   });
 }
 
 void main() async {
-  writeTest(8, WavFormat.PCM_8bit);
-  writeTest(16, WavFormat.PCM_16bit);
-  writeTest(24, WavFormat.PCM_24bit);
-  writeTest(32, WavFormat.PCM_32bit);
+  writeTest(8, WavFormat.pcm8bit);
+  writeTest(16, WavFormat.pcm16bit);
+  writeTest(24, WavFormat.pcm24bit);
+  writeTest(32, WavFormat.pcm32bit);
 }

@@ -1,0 +1,91 @@
+# Copyright 2022 The wav authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+  - cron: "0 0 * * 0"
+
+env:
+  PUB_ENVIRONMENT: bot.github
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sdk: [ dev ]
+    steps:
+    - uses: actions/checkout@v2.3.4
+    - uses: dart-lang/setup-dart@v1.0
+      with:
+        sdk: ${{ matrix.sdk }}
+    - uses: actions/cache@v2.1.6
+      with:
+        path: |
+          ~/.pub-cache/hosted/
+          .dart_tool/
+        key: ${{ runner.os }}-${{ matrix.sdk }}
+    - id: install
+      run: dart pub upgrade
+    - run: dart pub upgrade
+      working-directory: bench
+    - run: dart format --output=none --set-exit-if-changed .
+      if: always() && steps.install.outcome == 'success'
+    - run: dart analyze --fatal-infos
+      if: always() && steps.install.outcome == 'success'
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: [ 2.14.0, dev ]
+    steps:
+    - uses: dart-lang/setup-dart@v1.0
+      with:
+        sdk: ${{ matrix.sdk }}
+    - uses: actions/checkout@v2.3.4
+    - uses: actions/cache@v2.1.6
+      with:
+        path: |
+          ~/.pub-cache/hosted/
+          .dart_tool/
+        key: ${{ runner.os }}-${{ matrix.sdk }}
+    - run: dart pub upgrade
+    - run: dart test
+
+  coverage:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: dart-lang/setup-dart@v1.0
+      with:
+        sdk: dev
+    - uses: actions/checkout@v2.3.4
+    - id: install
+      name: Install dependencies
+      run: dart pub get
+    - name: Collect and report coverage
+      run: ./tool/test_coverage.sh
+    - name: Upload coverage
+      uses: coverallsapp/github-action@v1.1.2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: lcov.info

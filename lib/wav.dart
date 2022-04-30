@@ -16,17 +16,25 @@ import 'dart:io';
 import 'dart:typed_data';
 
 enum WavFormat {
-  PCM_8bit,
-  PCM_16bit,
-  PCM_24bit,
-  PCM_32bit,
+  pcm8bit,
+  pcm16bit,
+  pcm24bit,
+  pcm32bit,
 }
+
+// TODO: Test handling of padding bytes
+// TODO: Test unknown chunks
+// TODO: Handle float formats
 
 class Wav {
   final List<Float64List> channels;
   final int samplesPerSecond;
   final WavFormat format;
-  Wav(this.channels, this.samplesPerSecond, [this.format = WavFormat.PCM_16bit]);
+  Wav(
+    this.channels,
+    this.samplesPerSecond, [
+    this.format = WavFormat.pcm16bit,
+  ]);
 
   static Future<Wav> readFile(String filename) async {
     return read(await File(filename).readAsBytes());
@@ -40,27 +48,33 @@ class Wav {
   static const _kStrFmt = 'fmt ';
   static const _kStrData = 'data';
 
-  static _getFormat(int formatCode, int bitsPerSample) {
+  static WavFormat _getFormat(int formatCode, int bitsPerSample) {
     if (formatCode == _kPCM) {
-      if (bitsPerSample == 8) return WavFormat.PCM_8bit;
-      if (bitsPerSample == 16) return WavFormat.PCM_16bit;
-      if (bitsPerSample == 24) return WavFormat.PCM_24bit;
-      if (bitsPerSample == 32) return WavFormat.PCM_32bit;
+      if (bitsPerSample == 8) return WavFormat.pcm8bit;
+      if (bitsPerSample == 16) return WavFormat.pcm16bit;
+      if (bitsPerSample == 24) return WavFormat.pcm24bit;
+      if (bitsPerSample == 32) return WavFormat.pcm32bit;
     }
     throw FormatException('WUnsupported format: $formatCode, $bitsPerSample');
   }
 
+  // [0, 2] => [0, 2 ^ bits - 1]
+  static double _bitsToScale(int bits) => (1 << (bits - 1)).toDouble();
+
   static Wav read(Uint8List bytes) {
     // Utils for reading.
     int p = 0;
-    ByteData read(int n) {
-      final q = p + n;
-      if (q > bytes.length) {
+    void skip(int n) {
+      p += n;
+      if (p > bytes.length) {
         throw FormatException('WAV is corrupted, or not a WAV file.');
       }
-      final b = ByteData.sublistView(bytes, p, q);
-      p = q;
-      return b;
+    }
+
+    ByteData read(int n) {
+      final p0 = p;
+      skip(n);
+      return ByteData.sublistView(bytes, p0, p);
     }
 
     int readU8() => (read(1)).getUint8(0);
@@ -70,18 +84,29 @@ class Wav {
     int readS16() => (readU16() + (1 << 15)) % (1 << 16);
     int readS24() => (readU24() + (1 << 23)) % (1 << 24);
     int readS32() => (readU32() + (1 << 31)) % (1 << 32);
-    void checkString(String str) {
-      final s = String.fromCharCodes(Uint8List.sublistView(read(str.length)));
-      if (s != str) {
+    bool checkString(String s) {
+      return s == String.fromCharCodes(Uint8List.sublistView(read(s.length)));
+    }
+
+    void assertString(String s) {
+      if (!checkString(s)) {
         throw FormatException('WAV is corrupted, or not a WAV file.');
       }
     }
 
+    void findChunk(String s) {
+      while (!checkString(s)) {
+        final size = readU32();
+        skip(size + (size % 2)); // Chunk is always padded to an even number.
+      }
+    }
+
     // Read metadata.
-    checkString(_kStrRiff);
+    assertString(_kStrRiff);
     readU32(); // File size.
-    checkString(_kStrWave);
-    checkString(_kStrFmt);
+    assertString(_kStrWave);
+
+    findChunk(_kStrFmt);
     readU32(); // Format block size.
     final formatCode = readU16();
     final numChannels = readU16();
@@ -89,7 +114,8 @@ class Wav {
     readU32(); // Bytes per second.
     final bytesPerSampleAllChannels = readU16();
     final bitsPerSample = readU16();
-    checkString(_kStrData);
+
+    findChunk(_kStrData);
     final dataSize = readU32();
     final numSamples = dataSize ~/ bytesPerSampleAllChannels;
     final channels = <Float64List>[];
@@ -99,22 +125,18 @@ class Wav {
     final format = _getFormat(formatCode, bitsPerSample);
 
     // Read samples.
-    final bytesPerSample = bitsPerSample ~/ 8;
     final readSample = [readU8, readS16, readS24, readS32][format.index];
-    final scale = (1 << (bitsPerSample - 1)) - 0.5;
+    final scale = _bitsToScale(bitsPerSample);
     for (int i = 0; i < numSamples; ++i) {
       for (int j = 0; j < numChannels; ++j) {
         channels[j][i] = readSample() / scale - 1;
       }
     }
-    if (p != bytes.length) {
-      throw FormatException('WAV has leftover bytes');
-    }
     return Wav(channels, samplesPerSecond, format);
   }
 
   Float64List toMono() {
-    if (channels.length == 0) return Float64List(0);
+    if (channels.isEmpty) return Float64List(0);
     final mono = Float64List(channels[0].length);
     for (int i = 0; i < mono.length; ++i) {
       for (int j = 0; j < channels.length; ++j) {
@@ -151,8 +173,13 @@ class Wav {
     writeU16(int x) => writeU8(x)..addByte(x >> 8);
     writeU24(int x) => writeU16(x)..addByte(x >> 16);
     writeU32(int x) => writeU24(x)..addByte(x >> 24);
+    writeS16(int x) => writeU16((x + (1 << 15)) % (1 << 16));
+    writeS24(int x) => writeU24((x + (1 << 23)) % (1 << 24));
+    writeS32(int x) => writeU32((x + (1 << 31)) % (1 << 32));
     writeString(String str) {
-      for (int c in str.codeUnits) bytes.addByte(c);
+      for (int c in str.codeUnits) {
+        bytes.addByte(c);
+      }
     }
 
     // Write metadata.
@@ -171,13 +198,23 @@ class Wav {
     writeU32(dataSize);
 
     // Write samples.
-    final writeSample =
-        [writeU8, writeU16, writeU24, writeU32][format.index];
-    final scale = (1 << (bitsPerSample - 1)) - 1;
+    final writeSample = [writeU8, writeS16, writeS24, writeS32][format.index];
+    final scale = _bitsToScale(bitsPerSample);
+    final yMax = (1 << bitsPerSample) - 1;
     for (int i = 0; i < numSamples; ++i) {
       for (int j = 0; j < numChannels; ++j) {
-        writeSample(((channels[j][i] + 1) * scale).toInt());
+        final y = ((channels[j][i] + 1) * scale).floor();
+        writeSample(
+          y < 0
+              ? 0
+              : y > yMax
+                  ? yMax
+                  : y,
+        );
       }
+    }
+    if (dataSize % 2 != 0) {
+      writeU8(0); // Chunk is always padded to an even number.
     }
     return bytes.takeBytes();
   }
