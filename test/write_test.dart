@@ -71,4 +71,59 @@ void main() async {
         .takeBytes();
     expect(wav.write(), buf);
   });
+
+  test('If channels are different lengths, pad them with zeros', () {
+    final wav = Wav(
+      [
+        Float64List.fromList([1, 1, 1, 1, 1, 1]),
+        Float64List.fromList([-1, -1, -1, -1]),
+      ],
+      100,
+      WavFormat.pcm8bit,
+    );
+    final buf = (BytesBuilder()
+          ..add('RIFF'.codeUnits)
+          ..add([48, 0, 0, 0])
+          ..add('WAVE'.codeUnits)
+          ..add('fmt '.codeUnits)
+          ..add([16, 0, 0, 0])
+          ..add([1, 0])
+          ..add([2, 0])
+          ..add([100, 0, 0, 0])
+          ..add([200, 0, 0, 0])
+          ..add([2, 0])
+          ..add([8, 0])
+          ..add('data'.codeUnits)
+          ..add([12, 0, 0, 0])
+          ..add([255, 0, 255, 0, 255, 0, 255, 0, 255, 128, 255, 128]))
+        .takeBytes();
+    expect(wav.write(), buf);
+  });
+
+  test('If samples exceed [-1, 1], clamp them', () {
+    final wav = Wav(
+      [
+        Float64List.fromList([-100, -1.1, 1.1, 100])
+      ],
+      100,
+      WavFormat.pcm8bit,
+    );
+    final buf = (BytesBuilder()
+          ..add('RIFF'.codeUnits)
+          ..add([40, 0, 0, 0])
+          ..add('WAVE'.codeUnits)
+          ..add('fmt '.codeUnits)
+          ..add([16, 0, 0, 0])
+          ..add([1, 0])
+          ..add([1, 0])
+          ..add([100, 0, 0, 0])
+          ..add([100, 0, 0, 0])
+          ..add([1, 0])
+          ..add([8, 0])
+          ..add('data'.codeUnits)
+          ..add([4, 0, 0, 0])
+          ..add([0, 0, 255, 255]))
+        .takeBytes();
+    expect(wav.write(), buf);
+  });
 }

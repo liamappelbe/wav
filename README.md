@@ -5,3 +5,27 @@
 [![Coverage Status](https://coveralls.io/repos/github/liamappelbe/wav/badge.svg?branch=main)](https://coveralls.io/github/liamappelbe/wav?branch=main)
 
 Simple tools for reading and writing WAV files.
+
+This package currently supportsreading and writing 8, 16, 24, and 32 bit PCM.
+Other formats can be added as needed (just file a bug).
+
+## Usage
+
+```dart
+// Read a WAV file.
+final wav = await Wav.readFile(filename);
+
+// Look at its metadata.
+print(wav.format);
+print(wav.samplesPerSecond);
+
+// Mess with its audio data.
+for (final chan in wav.channels) {
+  for (int i = 0; i < chan.length; ++i) {
+    chan[i] /= 2;  // Decrease the volume.
+  }
+}
+
+// Write to another WAV file.
+await wav.writeFile(otherFilename);
+```
