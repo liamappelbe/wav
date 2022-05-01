@@ -18,8 +18,6 @@ description: >
   Simple tools for reading and writing WAV files.
 repository: https://github.com/liamappelbe/wav
 
-publish_to: 'none'
-
 environment:
   sdk: '>=2.14.0 <3.0.0'
 
