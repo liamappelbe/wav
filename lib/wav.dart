@@ -28,6 +28,12 @@ enum WavFormat {
 
   /// 32-bit PCM.
   pcm32bit,
+
+  /// 32-bit float.
+  float32,
+
+  /// 64-bit float.
+  float64,
 }
 
 /// A WAV file, containing audio, and metadata.
@@ -60,12 +66,16 @@ class Wav {
   }
 
   static const _kFormatSize = 16;
+  static const _kFactSize = 4;
   static const _kFileSizeWithoutData = 36;
+  static const _kFloatFmtExtraSize = 12;
   static const _kPCM = 1;
+  static const _kFloat = 3;
   static const _kStrRiff = 'RIFF';
   static const _kStrWave = 'WAVE';
   static const _kStrFmt = 'fmt ';
   static const _kStrData = 'data';
+  static const _kStrFact = 'fact';
 
   static WavFormat _getFormat(int formatCode, int bitsPerSample) {
     if (formatCode == _kPCM) {
@@ -73,12 +83,17 @@ class Wav {
       if (bitsPerSample == 16) return WavFormat.pcm16bit;
       if (bitsPerSample == 24) return WavFormat.pcm24bit;
       if (bitsPerSample == 32) return WavFormat.pcm32bit;
+    } else if (formatCode == _kFloat) {
+      if (bitsPerSample == 32) return WavFormat.float32;
+      if (bitsPerSample == 64) return WavFormat.float64;
     }
     throw FormatException('Unsupported format: $formatCode, $bitsPerSample');
   }
 
   // [0, 2] => [0, 2 ^ bits - 1]
-  static double _bitsToScale(int bits) => (1 << (bits - 1)).toDouble();
+  static double _wScale(int bits) => (1 << (bits - 1)) * 1.0;
+  static double _rScale(int bits) => _wScale(bits) - 0.5;
+  static int _fold(int x, int bits) => (x + (1 << (bits - 1))) % (1 << bits);
 
   // Chunk is always padded to an even number of bytes.
   static int _roundUp(int x) => x + (x % 2);
@@ -103,13 +118,17 @@ class Wav {
       return ByteData.sublistView(bytes, p0, p);
     }
 
-    int readU8() => (read(1)).getUint8(0);
-    int readU16() => (read(2)).getUint16(0, Endian.little);
+    int readU8() => read(1).getUint8(0);
+    int readU16() => read(2).getUint16(0, Endian.little);
     int readU24() => readU8() + 0x100 * readU16();
-    int readU32() => (read(4)).getUint32(0, Endian.little);
-    int readS16() => (readU16() + (1 << 15)) % (1 << 16);
-    int readS24() => (readU24() + (1 << 23)) % (1 << 24);
-    int readS32() => (readU32() + (1 << 31)) % (1 << 32);
+    int readU32() => read(4).getUint32(0, Endian.little);
+    double u2f(int x, int b) => (x / _rScale(b)) - 1;
+    double readS8() => u2f(readU8(), 8);
+    double readS16() => u2f(_fold(readU16(), 16), 16);
+    double readS24() => u2f(_fold(readU24(), 24), 24);
+    double readS32() => u2f(_fold(readU32(), 32), 32);
+    double readF32() => read(4).getFloat32(0, Endian.little);
+    double readF64() => read(8).getFloat64(0, Endian.little);
     bool checkString(String s) {
       return s == String.fromCharCodes(Uint8List.sublistView(read(s.length)));
     }
@@ -133,13 +152,14 @@ class Wav {
     assertString(_kStrWave);
 
     findChunk(_kStrFmt);
-    readU32(); // Format block size.
+    final fmtSize = _roundUp(readU32());
     final formatCode = readU16();
     final numChannels = readU16();
     final samplesPerSecond = readU32();
     readU32(); // Bytes per second.
     final bytesPerSampleAllChannels = readU16();
     final bitsPerSample = readU16();
+    if (fmtSize > _kFormatSize) skip(fmtSize - _kFormatSize);
 
     findChunk(_kStrData);
     final dataSize = readU32();
@@ -151,11 +171,11 @@ class Wav {
     final format = _getFormat(formatCode, bitsPerSample);
 
     // Read samples.
-    final readSample = [readU8, readS16, readS24, readS32][format.index];
-    final scale = _bitsToScale(bitsPerSample) - 0.5;
+    final readSample =
+        [readS8, readS16, readS24, readS32, readF32, readF64][format.index];
     for (int i = 0; i < numSamples; ++i) {
       for (int j = 0; j < numChannels; ++j) {
-        channels[j][i] = readSample() / scale - 1;
+        channels[j][i] = readSample();
       }
     }
     return Wav(channels, samplesPerSecond, format);
@@ -183,11 +203,13 @@ class Wav {
 
   /// Write the Wav to a byte buffer.
   ///
-  /// If your audio samples exceed `[-1, 1]`, they will be clamped. If your
-  /// channels are different lengths, they will be padded with zeros.
+  /// If your audio samples exceed `[-1, 1]`, they will be clamped (unless
+  /// you're using float32 or float64 format). If your channels are different
+  /// lengths, they will be padded with zeros.
   Uint8List write() {
     // Calculate sizes etc.
-    final bitsPerSample = [8, 16, 24, 32][format.index];
+    final bitsPerSample = [8, 16, 24, 32, 32, 64][format.index];
+    final isFloat = format == WavFormat.float32 || format == WavFormat.float64;
     final bytesPerSample = bitsPerSample ~/ 8;
     final numChannels = channels.length;
     int numSamples = 0;
@@ -197,7 +219,10 @@ class Wav {
     final bytesPerSampleAllChannels = bytesPerSample * numChannels;
     final dataSize = numSamples * bytesPerSampleAllChannels;
     final bytesPerSecond = bytesPerSampleAllChannels * samplesPerSecond;
-    final fileSize = _kFileSizeWithoutData + _roundUp(dataSize);
+    var fileSize = _kFileSizeWithoutData + _roundUp(dataSize);
+    if (isFloat) {
+      fileSize += _kFloatFmtExtraSize;
+    }
 
     // Utils for writing. The write methods rely on ByteBuilder's truncation.
     final bytes = BytesBuilder();
@@ -205,9 +230,20 @@ class Wav {
     writeU16(int x) => writeU8(x)..addByte(x >> 8);
     writeU24(int x) => writeU16(x)..addByte(x >> 16);
     writeU32(int x) => writeU24(x)..addByte(x >> 24);
-    writeS16(int x) => writeU16((x + (1 << 15)) % (1 << 16));
-    writeS24(int x) => writeU24((x + (1 << 23)) % (1 << 24));
-    writeS32(int x) => writeU32((x + (1 << 31)) % (1 << 32));
+    clamp(int x, int y) => x < 0
+        ? 0
+        : x > y
+            ? y
+            : x;
+    f2u(double x, int b) => clamp(((x + 1) * _wScale(b)).floor(), (1 << b) - 1);
+    writeS8(double x) => writeU8(f2u(x, 8));
+    writeS16(double x) => writeU16(_fold(f2u(x, 16), 16));
+    writeS24(double x) => writeU24(_fold(f2u(x, 24), 24));
+    writeS32(double x) => writeU32(_fold(f2u(x, 32), 32));
+    final fbuf = ByteData(8);
+    writeBytes(ByteData b, int n) => bytes.add(b.buffer.asUint8List(0, n));
+    writeF32(double x) => writeBytes(fbuf..setFloat32(0, x, Endian.little), 4);
+    writeF64(double x) => writeBytes(fbuf..setFloat64(0, x, Endian.little), 8);
     writeString(String str) {
       for (int c in str.codeUnits) {
         bytes.addByte(c);
@@ -220,30 +256,32 @@ class Wav {
     writeString(_kStrWave);
     writeString(_kStrFmt);
     writeU32(_kFormatSize);
-    writeU16(_kPCM);
+    writeU16(isFloat ? _kFloat : _kPCM);
     writeU16(numChannels);
     writeU32(samplesPerSecond);
     writeU32(bytesPerSecond);
     writeU16(bytesPerSampleAllChannels);
     writeU16(bitsPerSample);
+    if (isFloat) {
+      writeString(_kStrFact);
+      writeU32(_kFactSize);
+      writeU32(numSamples);
+    }
     writeString(_kStrData);
     writeU32(dataSize);
 
     // Write samples.
-    final writeSample = [writeU8, writeS16, writeS24, writeS32][format.index];
-    final scale = _bitsToScale(bitsPerSample);
-    final yMax = (1 << bitsPerSample) - 1;
+    final writeSample = [
+      writeS8,
+      writeS16,
+      writeS24,
+      writeS32,
+      writeF32,
+      writeF64,
+    ][format.index];
     for (int i = 0; i < numSamples; ++i) {
       for (int j = 0; j < numChannels; ++j) {
-        final x = i < channels[j].length ? channels[j][i] : 0;
-        final y = ((x + 1) * scale).floor();
-        writeSample(
-          y < 0
-              ? 0
-              : y > yMax
-                  ? yMax
-                  : y,
-        );
+        writeSample(i < channels[j].length ? channels[j][i] : 0);
       }
     }
     if (dataSize % 2 != 0) {

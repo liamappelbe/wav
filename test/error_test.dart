@@ -227,6 +227,34 @@ void main() async {
     );
   });
 
+  test('Bad float width', () {
+    final buf = (BytesBuilder()
+          ..add('RIFF'.codeUnits)
+          ..add([46, 0, 0, 0])
+          ..add('WAVE'.codeUnits)
+          ..add('fmt '.codeUnits)
+          ..add([16, 0, 0, 0])
+          ..add([3, 0])
+          ..add([1, 0])
+          ..add([100, 0, 0, 0])
+          ..add([100, 0, 0, 0])
+          ..add([1, 0])
+          ..add([47, 0])
+          ..add('data'.codeUnits)
+          ..add([8, 0, 0, 0])
+          ..add([255, 0, 255, 0, 255, 0, 255, 0]))
+        .takeBytes();
+    expect(
+      () => Wav.read(buf),
+      throwsA(
+        predicate(
+          (e) =>
+              e is FormatException && e.message == 'Unsupported format: 3, 47',
+        ),
+      ),
+    );
+  });
+
   test('Truncated fmt chunk', () {
     final buf = (BytesBuilder()
           ..add('RIFF'.codeUnits)

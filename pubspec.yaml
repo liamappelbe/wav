@@ -13,9 +13,9 @@
 # limitations under the License.
 
 name: wav
-version: 1.0.0
+version: 1.1.0-dev
 description: >
-  Simple tools for reading and writing WAV files.
+  Super simple pure Dart package for reading and writing WAV files.
 repository: https://github.com/liamappelbe/wav
 
 environment:

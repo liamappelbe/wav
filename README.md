@@ -4,10 +4,11 @@
 [![Build Status](https://github.com/liamappelbe/wav/workflows/CI/badge.svg)](https://github.com/liamappelbe/wav/actions?query=workflow%3ACI+branch%3Amain)
 [![Coverage Status](https://coveralls.io/repos/github/liamappelbe/wav/badge.svg?branch=main)](https://coveralls.io/github/liamappelbe/wav?branch=main)
 
-Simple tools for reading and writing WAV files.
+Simple tools for reading and writing WAV files. Written in pure Dart, with no
+dependencies.
 
-This package currently supportsreading and writing 8, 16, 24, and 32 bit PCM.
-Other formats can be added as needed (just file a bug).
+This package currently supports reading and writing 8/16/24/32 bit PCM, and
+32/64 bit float formats. Other formats can be added as needed (just file a bug).
 
 ## Usage
 

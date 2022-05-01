@@ -18,10 +18,10 @@ import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:wav/wav.dart';
 
-void bijectiveTest(int bits, WavFormat format) {
-  test('Write ${bits}bit file', () async {
+void bijectiveTest(String name, WavFormat format) {
+  test('Reading and writing $format file is bijective', () async {
     final rand = math.Random(1557892);
-    final tempFilename = 'test/bijective-${bits}bit.wav.temp';
+    final tempFilename = 'test/bijective-$name.wav.temp';
     final channels = [Float64List(1392), Float64List(1392)];
     for (int i = 0; i < 1392; ++i) {
       for (int j = 0; j < 2; ++j) {
@@ -41,8 +41,10 @@ void bijectiveTest(int bits, WavFormat format) {
 }
 
 void main() async {
-  bijectiveTest(8, WavFormat.pcm8bit);
-  bijectiveTest(16, WavFormat.pcm16bit);
-  bijectiveTest(24, WavFormat.pcm24bit);
-  bijectiveTest(32, WavFormat.pcm32bit);
+  bijectiveTest('8bit', WavFormat.pcm8bit);
+  bijectiveTest('16bit', WavFormat.pcm16bit);
+  bijectiveTest('24bit', WavFormat.pcm24bit);
+  bijectiveTest('32bit', WavFormat.pcm32bit);
+  bijectiveTest('float32', WavFormat.float32);
+  bijectiveTest('float64', WavFormat.float64);
 }

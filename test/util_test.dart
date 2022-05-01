@@ -39,4 +39,15 @@ void main() async {
       [0, -1, 0.5],
     );
   });
+
+  test('WavFormat indices', () {
+    // The read and write methods make assumptions about the index values, so
+    // this test is just to make sure we don't change them accidentally.
+    expect(WavFormat.pcm8bit.index, 0);
+    expect(WavFormat.pcm16bit.index, 1);
+    expect(WavFormat.pcm24bit.index, 2);
+    expect(WavFormat.pcm32bit.index, 3);
+    expect(WavFormat.float32.index, 4);
+    expect(WavFormat.float64.index, 5);
+  });
 }

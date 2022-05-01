@@ -18,9 +18,9 @@ import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:wav/wav.dart';
 
-void writeTest(int bits, WavFormat format) {
-  test('Write ${bits}bit file', () async {
-    final filename = 'test/400Hz-${bits}bit.wav';
+void writeTest(String name, WavFormat format) {
+  test('Write $format file', () async {
+    final filename = 'test/400Hz-$name.wav';
     final tempFilename = '$filename.temp';
     final channels = [Float64List(101), Float64List(101)];
     for (int i = 0; i < 101; ++i) {
@@ -31,7 +31,7 @@ void writeTest(int bits, WavFormat format) {
     final wav = Wav(channels, 8000, format);
     await wav.writeFile(tempFilename);
 
-    final expected = await File(filename).readAsBytes();
+    var expected = await File(filename).readAsBytes();
     final actual = await File(tempFilename).readAsBytes();
     expect(actual, expected);
 
@@ -40,10 +40,12 @@ void writeTest(int bits, WavFormat format) {
 }
 
 void main() async {
-  writeTest(8, WavFormat.pcm8bit);
-  writeTest(16, WavFormat.pcm16bit);
-  writeTest(24, WavFormat.pcm24bit);
-  writeTest(32, WavFormat.pcm32bit);
+  writeTest('8bit', WavFormat.pcm8bit);
+  writeTest('16bit', WavFormat.pcm16bit);
+  writeTest('24bit', WavFormat.pcm24bit);
+  writeTest('32bit', WavFormat.pcm32bit);
+  writeTest('float32', WavFormat.float32);
+  writeTest('float64', WavFormat.float64);
 
   test('Writing includes padding byte', () {
     final wav = Wav(
@@ -123,6 +125,36 @@ void main() async {
           ..add('data'.codeUnits)
           ..add([4, 0, 0, 0])
           ..add([0, 0, 255, 255]))
+        .takeBytes();
+    expect(wav.write(), buf);
+  });
+
+  test('Float formats do not clamp samples', () {
+    final wav = Wav(
+      [
+        Float64List.fromList([-100, 100])
+      ],
+      100,
+      WavFormat.float32,
+    );
+    final buf = (BytesBuilder()
+          ..add('RIFF'.codeUnits)
+          ..add([56, 0, 0, 0])
+          ..add('WAVE'.codeUnits)
+          ..add('fmt '.codeUnits)
+          ..add([16, 0, 0, 0])
+          ..add([3, 0])
+          ..add([1, 0])
+          ..add([100, 0, 0, 0])
+          ..add([144, 1, 0, 0])
+          ..add([4, 0])
+          ..add([32, 0])
+          ..add('fact'.codeUnits)
+          ..add([4, 0, 0, 0])
+          ..add([2, 0, 0, 0])
+          ..add('data'.codeUnits)
+          ..add([8, 0, 0, 0])
+          ..add([0, 0, 200, 194, 0, 0, 200, 66]))
         .takeBytes();
     expect(wav.write(), buf);
   });
