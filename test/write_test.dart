@@ -44,4 +44,31 @@ void main() async {
   writeTest(16, WavFormat.pcm16bit);
   writeTest(24, WavFormat.pcm24bit);
   writeTest(32, WavFormat.pcm32bit);
+
+  test('Writing includes padding byte', () {
+    final wav = Wav(
+      [
+        Float64List.fromList([1, -1, 1, -1, 1, -1, 1, -1, 1])
+      ],
+      100,
+      WavFormat.pcm8bit,
+    );
+    final buf = (BytesBuilder()
+          ..add('RIFF'.codeUnits)
+          ..add([46, 0, 0, 0])
+          ..add('WAVE'.codeUnits)
+          ..add('fmt '.codeUnits)
+          ..add([16, 0, 0, 0])
+          ..add([1, 0])
+          ..add([1, 0])
+          ..add([100, 0, 0, 0])
+          ..add([100, 0, 0, 0])
+          ..add([1, 0])
+          ..add([8, 0])
+          ..add('data'.codeUnits)
+          ..add([9, 0, 0, 0])
+          ..add([255, 0, 255, 0, 255, 0, 255, 0, 255, 0])) // Padded to 10.
+        .takeBytes();
+    expect(wav.write(), buf);
+  });
 }

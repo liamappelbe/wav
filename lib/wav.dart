@@ -22,10 +22,6 @@ enum WavFormat {
   pcm32bit,
 }
 
-// TODO: Test handling of padding bytes
-// TODO: Test unknown chunks
-// TODO: Handle float formats
-
 class Wav {
   final List<Float64List> channels;
   final int samplesPerSecond;
@@ -55,11 +51,14 @@ class Wav {
       if (bitsPerSample == 24) return WavFormat.pcm24bit;
       if (bitsPerSample == 32) return WavFormat.pcm32bit;
     }
-    throw FormatException('WUnsupported format: $formatCode, $bitsPerSample');
+    throw FormatException('Unsupported format: $formatCode, $bitsPerSample');
   }
 
   // [0, 2] => [0, 2 ^ bits - 1]
   static double _bitsToScale(int bits) => (1 << (bits - 1)).toDouble();
+
+  // Chunk is always padded to an even number of bytes.
+  static int _roundUp(int x) => x + (x % 2);
 
   static Wav read(Uint8List bytes) {
     // Utils for reading.
@@ -97,7 +96,7 @@ class Wav {
     void findChunk(String s) {
       while (!checkString(s)) {
         final size = readU32();
-        skip(size + (size % 2)); // Chunk is always padded to an even number.
+        skip(_roundUp(size));
       }
     }
 
@@ -126,7 +125,7 @@ class Wav {
 
     // Read samples.
     final readSample = [readU8, readS16, readS24, readS32][format.index];
-    final scale = _bitsToScale(bitsPerSample);
+    final scale = _bitsToScale(bitsPerSample) - 0.5;
     for (int i = 0; i < numSamples; ++i) {
       for (int j = 0; j < numChannels; ++j) {
         channels[j][i] = readSample() / scale - 1;
@@ -147,8 +146,6 @@ class Wav {
     return mono;
   }
 
-  static const kDefaultBitsPerSample = 16;
-
   Future<void> writeFile(String filename) async {
     await File(filename).writeAsBytes(write());
   }
@@ -165,7 +162,7 @@ class Wav {
     final bytesPerSampleAllChannels = bytesPerSample * numChannels;
     final dataSize = numSamples * bytesPerSampleAllChannels;
     final bytesPerSecond = bytesPerSampleAllChannels * samplesPerSecond;
-    final fileSize = _kFileSizeWithoutData + dataSize;
+    final fileSize = _kFileSizeWithoutData + _roundUp(dataSize);
 
     // Utils for writing. (The write methods rely on ByteBuilder's truncation.
     final bytes = BytesBuilder();
@@ -214,7 +211,7 @@ class Wav {
       }
     }
     if (dataSize % 2 != 0) {
-      writeU8(0); // Chunk is always padded to an even number.
+      writeU8(0);
     }
     return bytes.takeBytes();
   }

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:wav/wav.dart';
 
@@ -25,7 +26,7 @@ void readTest(int bits, WavFormat format) {
     expect(wav.channels.length, 2);
     expect(wav.channels[0].length, 101);
     expect(wav.channels[1].length, 101);
-    final epsilon = 1.3 * math.pow(0.5, bits - 1);
+    final epsilon = math.pow(0.5, bits - 1);
     for (int i = 0; i < wav.channels[0].length; ++i) {
       final t = i * 2 * math.pi * 400 / 8000;
       expect(wav.channels[0][i], closeTo(math.sin(t), epsilon));
@@ -39,4 +40,36 @@ void main() async {
   readTest(16, WavFormat.pcm16bit);
   readTest(24, WavFormat.pcm24bit);
   readTest(32, WavFormat.pcm32bit);
+
+  test('Reading skips unknown chunks', () {
+    final buf = (BytesBuilder()
+          ..add('RIFF'.codeUnits)
+          ..add([0, 0, 0, 0])
+          ..add('WAVE'.codeUnits)
+          ..add('junk'.codeUnits)
+          ..add([8, 0, 0, 0])
+          ..add([0, 0, 0, 0, 0, 0, 0, 0])
+          ..add('fmt '.codeUnits)
+          ..add([16, 0, 0, 0])
+          ..add([1, 0])
+          ..add([1, 0])
+          ..add([100, 0, 0, 0])
+          ..add([100, 0, 0, 0])
+          ..add([1, 0])
+          ..add([8, 0])
+          ..add('spam'.codeUnits)
+          ..add([13, 0, 0, 0])
+          ..add([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+          ..add('data'.codeUnits)
+          ..add([9, 0, 0, 0])
+          ..add([255, 0, 255, 0, 255, 0, 255, 0, 255, 0])
+          ..add('test'.codeUnits)
+          ..add([0, 0, 0, 0]))
+        .takeBytes();
+    final wav = Wav.read(buf);
+    expect(wav.format, WavFormat.pcm8bit);
+    expect(wav.samplesPerSecond, 100);
+    expect(wav.channels.length, 1);
+    expect(wav.channels[0], [1, -1, 1, -1, 1, -1, 1, -1, 1]);
+  });
 }
