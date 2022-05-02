@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'dart:io';
 import 'dart:typed_data';
+import 'wav_no_io.dart' if (dart.library.io) 'wav_io.dart';
 
 /// The supported WAV formats.
 enum WavFormat {
@@ -62,7 +62,7 @@ class Wav {
   ///
   /// Convenience wrapper around [read]. See that method for details.
   static Future<Wav> readFile(String filename) async {
-    return read(await File(filename).readAsBytes());
+    return read(await internalReadFile(filename));
   }
 
   static const _kFormatSize = 16;
@@ -198,7 +198,7 @@ class Wav {
   ///
   /// Convenience wrapper around [write]. See that method for details.
   Future<void> writeFile(String filename) async {
-    await File(filename).writeAsBytes(write());
+    await internalWriteFile(filename, write());
   }
 
   /// Write the Wav to a byte buffer.
