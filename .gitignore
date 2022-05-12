@@ -7,5 +7,5 @@
 build/
 pubspec.lock
 lcov.info
-coverage.json
+coverage/
 test/*.temp
