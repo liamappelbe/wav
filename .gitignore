@@ -6,6 +6,5 @@
 .pub/
 build/
 pubspec.lock
-lcov.info
 coverage/
 test/*.temp
