@@ -22,7 +22,7 @@ environment:
   sdk: '>=2.14.0 <3.0.0'
 
 dependencies:
-  fftea: ^1.0.0
+  fftea: ^1.1.0
   wav:
     path: ..
 

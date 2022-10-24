@@ -27,6 +27,7 @@ void readTest(String name, WavFormat format, int bitsOfAccuracy) {
     expect(wav.channels.length, 2);
     expect(wav.channels[0].length, 101);
     expect(wav.channels[1].length, 101);
+    expect(wav.duration, 0.012625);
     for (int i = 0; i < wav.channels[0].length; ++i) {
       final t = i * 2 * math.pi * 400 / 8000;
       expect(wav.channels[0][i], closeTo(math.sin(t), epsilon));
@@ -41,7 +42,7 @@ void main() async {
   readTest('24bit', WavFormat.pcm24bit, 24);
   readTest('32bit', WavFormat.pcm32bit, 32);
   readTest('float32', WavFormat.float32, 26);
-  readTest('float64', WavFormat.float64, 26);
+  readTest('float64', WavFormat.float64, 52);
 
   test('Reading skips unknown chunks', () {
     final buf = (BytesBuilder()

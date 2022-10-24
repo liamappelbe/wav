@@ -65,6 +65,10 @@ class Wav {
     return read(await internalReadFile(filename));
   }
 
+  /// Returns the duration of the Wav in seconds.
+  double get duration =>
+      channels.isEmpty ? 0 : channels[0].length / samplesPerSecond;
+
   static const _kFormatSize = 16;
   static const _kFactSize = 4;
   static const _kFileSizeWithoutData = 36;
