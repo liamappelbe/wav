@@ -1,7 +1,8 @@
 import 'dart:typed_data';
 
-import 'Positional_Byte_Reader.dart';
-import 'wav_format.dart';
+import 'common.dart';
+import 'internal.dart';
+import 'positional_byte_reader.dart';
 
 class WavHeader {
   WavFormat format;
@@ -23,21 +24,13 @@ class WavHeaderReader
 
   WavHeaderReader(this.byteReader);
 
-  static const _kFormatSize = 16;
-  static const _kPCM = 1;
-  static const _kFloat = 3;
-  static const _kStrRiff = 'RIFF';
-  static const _kStrWave = 'WAVE';
-  static const _kStrFmt = 'fmt ';
-  static const _kStrData = 'data';
-
   static WavFormat _getFormat(int formatCode, int bitsPerSample) {
-    if (formatCode == _kPCM) {
+    if (formatCode == kPCM) {
       if (bitsPerSample == 8) return WavFormat.pcm8bit;
       if (bitsPerSample == 16) return WavFormat.pcm16bit;
       if (bitsPerSample == 24) return WavFormat.pcm24bit;
       if (bitsPerSample == 32) return WavFormat.pcm32bit;
-    } else if (formatCode == _kFloat) {
+    } else if (formatCode == kFloat) {
       if (bitsPerSample == 32) return WavFormat.float32;
       if (bitsPerSample == 64) return WavFormat.float64;
     }
@@ -74,11 +67,11 @@ class WavHeaderReader
   WavHeader read()
   {
     // Read metadata.
-    assertString(_kStrRiff);
+    assertString(kStrRiff);
     readU32(); // File size.
-    assertString(_kStrWave);
+    assertString(kStrWave);
 
-    findChunk(_kStrFmt);
+    findChunk(kStrFmt);
     final fmtSize = _roundUp(readU32());
     final formatCode = readU16();
     final numChannels = readU16();
@@ -86,9 +79,9 @@ class WavHeaderReader
     readU32(); // Bytes per second.
     final bytesPerSampleAllChannels = readU16();
     final bitsPerSample = readU16();
-    if (fmtSize > _kFormatSize) byteReader.skip(fmtSize - _kFormatSize);
+    if (fmtSize > kFormatSize) byteReader.skip(fmtSize - kFormatSize);
 
-    findChunk(_kStrData);
+    findChunk(kStrData);
     final dataSize = readU32();
     final numSamples = dataSize ~/ bytesPerSampleAllChannels;
     final format = _getFormat(formatCode, bitsPerSample);
