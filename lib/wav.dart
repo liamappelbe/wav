@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 export 'common.dart';
-export 'wav_audio.dart';
+export 'wav_data_reader.dart';
 export 'wav_file.dart';

@@ -4,20 +4,6 @@ import 'common.dart';
 import 'internal.dart';
 import 'positional_byte_reader.dart';
 
-class WavHeader {
-  WavFormat format;
-  int numChannels;
-  int numSamples;
-  int samplesPerSecond;
-
-  WavHeader(
-    this.numChannels, 
-    this.numSamples, 
-    this.format, 
-    this.samplesPerSecond,
-  );
-}
-
 class WavHeaderReader
 {
   PositionalByteReader byteReader;

@@ -17,8 +17,8 @@ import 'dart:typed_data';
 import 'common.dart';
 import 'internal.dart';
 import 'positional_byte_reader.dart';
-import 'wav_audio.dart';
-import 'wav_header.dart';
+import 'wav_data_reader.dart';
+import 'wav_header_reader.dart';
 import 'wav_no_io.dart' if (dart.library.io) 'wav_io.dart';
 
 /// A WAV file, containing audio, and metadata.
@@ -61,7 +61,7 @@ class Wav {
   static Wav read(Uint8List bytes) {
     var byteReader = PositionalByteReader(bytes);
     var header = WavHeaderReader(byteReader).read();
-    final channels = WavAudioReader(byteReader).readAudio(header);
+    final channels = WavDataReader(byteReader).readData(header);
     return Wav(channels, header.samplesPerSecond, header.format);
   }
 

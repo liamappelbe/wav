@@ -17,3 +17,7 @@ Apply reverb to a wav.
 Not sure how to describe this one...
 
 `dart run weird.dart test.wav out.wav`
+
+Demo to illustrate ingesting raw (headerless) audio data:
+
+`dart raw.dart guitar.raw pcm16bit 1 44100`

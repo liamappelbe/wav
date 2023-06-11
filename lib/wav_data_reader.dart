@@ -3,13 +3,12 @@ import 'dart:typed_data';
 import 'common.dart';
 import 'internal.dart';
 import 'positional_byte_reader.dart';
-import 'wav_header.dart';
 
-class WavAudioReader
+class WavDataReader
 {
   PositionalByteReader byteReader;
 
-  WavAudioReader(this.byteReader);
+  WavDataReader(this.byteReader);
 
   // Helper functions
   int readU8() => byteReader.read(1).getUint8(0);
@@ -33,7 +32,7 @@ class WavAudioReader
   /// Read raw audio data from a byte buffer (assumes no header information
   /// is present in the buffer so needs that meta data to be known up front
   /// and supplied as a parameter)
-  List<Float64List> readAudio(WavHeader header)
+  List<Float64List> readData(WavHeader header)
   {
     // Read samples.
     final readSample = sampleReader(header.format);
