@@ -13,7 +13,10 @@
 // limitations under the License.
 
 import 'dart:typed_data';
-import 'raw.dart';
+import 'Positional_Byte_Reader.dart';
+import 'wav_format.dart';
+import 'wav_audio.dart';
+import 'wav_header.dart';
 import 'wav_no_io.dart' if (dart.library.io) 'wav_io.dart';
 
 /// A WAV file, containing audio, and metadata.
@@ -86,65 +89,13 @@ class Wav {
   /// Not all formats are supported. See [WavFormat] for a canonical list.
   /// Unrecognized metadata will be ignored.
   static Wav read(Uint8List bytes) {
-    // Utils for reading.
-    int p = 0;
-    void skip(int n) {
-      p += n;
-      if (p > bytes.length) {
-        throw FormatException('WAV is corrupted, or not a WAV file.');
-      }
-    }
 
-    ByteData read(int n) {
-      final p0 = p;
-      skip(n);
-      return ByteData.sublistView(bytes, p0, p);
-    }
-
-    int readU16() => read(2).getUint16(0, Endian.little);
-    int readU32() => read(4).getUint32(0, Endian.little);
-    bool checkString(String s) {
-      return s == String.fromCharCodes(Uint8List.sublistView(read(s.length)));
-    }
-
-    void assertString(String s) {
-      if (!checkString(s)) {
-        throw FormatException('WAV is corrupted, or not a WAV file.');
-      }
-    }
-
-    void findChunk(String s) {
-      while (!checkString(s)) {
-        final size = readU32();
-        skip(_roundUp(size));
-      }
-    }
-
-    // Read metadata.
-    assertString(_kStrRiff);
-    readU32(); // File size.
-    assertString(_kStrWave);
-
-    findChunk(_kStrFmt);
-    final fmtSize = _roundUp(readU32());
-    final formatCode = readU16();
-    final numChannels = readU16();
-    final samplesPerSecond = readU32();
-    readU32(); // Bytes per second.
-    final bytesPerSampleAllChannels = readU16();
-    final bitsPerSample = readU16();
-    if (fmtSize > _kFormatSize) skip(fmtSize - _kFormatSize);
-
-    findChunk(_kStrData);
-    final dataSize = readU32();
-    final numSamples = dataSize ~/ bytesPerSampleAllChannels;
-    final format = _getFormat(formatCode, bitsPerSample);
+    var byteReader = PositionalByteReader(bytes);
+    var header = WavHeaderReader(byteReader).read();
 
     // Read samples.
-    final channels = Raw.read(
-      bytes, numChannels, numSamples, format, startPosition: p,
-      );
-    return Wav(channels, samplesPerSecond, format);
+    final channels = WavAudioReader.readAudio(byteReader, header);
+    return Wav(channels, header.samplesPerSecond, header.format);
   }
 
   /// Mix the audio channels down to mono.
