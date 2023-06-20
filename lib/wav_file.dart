@@ -86,12 +86,11 @@ class Wav {
     // Utils for reading.
     var byteReader = WavReader(bytes)
 
-    // Read metadata.
-    ..assertString(_kStrRiff)
-    ..readU32() // File size.
-    ..assertString(_kStrWave)
-
-    ..findChunk(_kStrFmt);
+      // Read metadata.
+      ..assertString(_kStrRiff)
+      ..readU32() // File size.
+      ..assertString(_kStrWave)
+      ..findChunk(_kStrFmt);
     final fmtSize = WavUtils.roundUp(byteReader.readU32());
     final formatCode = byteReader.readU16();
     final numChannels = byteReader.readU16();
@@ -176,17 +175,19 @@ class Wav {
       ..writeU16(bytesPerSampleAllChannels)
       ..writeU16(bitsPerSample);
     if (isFloat) {
-      bytes..writeString(_kStrFact)
-           ..writeU32(_kFactSize)
-           ..writeU32(numSamples);
+      bytes
+        ..writeString(_kStrFact)
+        ..writeU32(_kFactSize)
+        ..writeU32(numSamples);
     }
-    bytes..writeString(_kStrData)
-         ..writeU32(dataSize);
+    bytes
+      ..writeString(_kStrData)
+      ..writeU32(dataSize);
 
     // Write samples.
     for (int i = 0; i < numSamples; ++i) {
       for (int j = 0; j < numChannels; ++j) {
-        double sample = i < channels[j].length ? channels[j][i] : 0; 
+        double sample = i < channels[j].length ? channels[j][i] : 0;
         bytes.writeSample(format, sample);
       }
     }
