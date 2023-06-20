@@ -3,8 +3,8 @@ import 'dart:typed_data';
 import 'wav_types.dart';
 import 'wav_utils.dart';
 
-class WavWriter {
-  WavWriter();
+class WavBytesWriter {
+  WavBytesWriter();
 
   final bytes = BytesBuilder();
 
@@ -35,19 +35,15 @@ class WavWriter {
     }
   }
 
-  SampleWriter? sampleWriter;
-  void writeSample(WavFormat format, double sample) {
-    sampleWriter = sampleWriter ??
-        [
-          writeS8,
-          writeS16,
-          writeS24,
-          writeS32,
-          writeF32,
-          writeF64
-        ][format.index];
-    sampleWriter!(sample);
-  }
+  SampleWriter getSampleWriter(WavFormat format) =>
+      [
+        writeS8,
+        writeS16,
+        writeS24,
+        writeS32,
+        writeF32,
+        writeF64
+      ][format.index];
 
   Uint8List takeBytes() => bytes.takeBytes();
 }

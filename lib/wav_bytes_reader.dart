@@ -5,11 +5,11 @@ import 'wav_utils.dart';
 
 /// Utility class to incrementally read through a series of bytes, interpreting
 /// byte combinations as little endian (used for Wav files)
-class WavReader {
+class WavBytesReader {
   final Uint8List bytes;
   int p;
 
-  WavReader(
+  WavBytesReader(
     this.bytes, {
     this.p = 0,
   });
@@ -66,11 +66,15 @@ class WavReader {
     }
   }
 
-  SampleReader? sampleReader;
-  double readSample(WavFormat format) {
-    sampleReader = sampleReader ??
-        [readS8, readS16, readS24, readS32, readF32, readF64][format.index];
-    return sampleReader!();
+  SampleReader getSampleReader(WavFormat format) {
+    return [
+      readS8,
+      readS16,
+      readS24,
+      readS32,
+      readF32,
+      readF64,
+    ][format.index];
   }
 }
 

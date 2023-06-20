@@ -14,11 +14,11 @@
 
 import 'dart:typed_data';
 
+import 'wav_bytes_reader.dart';
+import 'wav_bytes_writer.dart';
 import 'wav_no_io.dart' if (dart.library.io) 'wav_io.dart';
-import 'wav_reader.dart';
 import 'wav_types.dart';
 import 'wav_utils.dart';
-import 'wav_writer.dart';
 
 /// A WAV file, containing audio, and metadata.
 class Wav {
@@ -84,7 +84,7 @@ class Wav {
   /// Unrecognized metadata will be ignored.
   static Wav read(Uint8List bytes) {
     // Utils for reading.
-    var byteReader = WavReader(bytes)
+    var byteReader = WavBytesReader(bytes)
 
       // Read metadata.
       ..assertString(_kStrRiff)
@@ -110,9 +110,10 @@ class Wav {
     final format = _getFormat(formatCode, bitsPerSample);
 
     // Read samples.
+    final readSample = byteReader.getSampleReader(format);
     for (int i = 0; i < numSamples; ++i) {
       for (int j = 0; j < numChannels; ++j) {
-        channels[j][i] = byteReader.readSample(format);
+        channels[j][i] = readSample();
       }
     }
     return Wav(channels, samplesPerSecond, format);
@@ -162,7 +163,7 @@ class Wav {
     }
 
     // Write metadata.
-    final bytes = WavWriter()
+    final bytes = WavBytesWriter()
       ..writeString(_kStrRiff)
       ..writeU32(fileSize)
       ..writeString(_kStrWave)
@@ -185,10 +186,11 @@ class Wav {
       ..writeU32(dataSize);
 
     // Write samples.
+    final writeSample = bytes.getSampleWriter(format);
     for (int i = 0; i < numSamples; ++i) {
       for (int j = 0; j < numChannels; ++j) {
         double sample = i < channels[j].length ? channels[j][i] : 0;
-        bytes.writeSample(format, sample);
+        writeSample(sample);
       }
     }
     if (dataSize % 2 != 0) {
