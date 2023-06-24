@@ -146,7 +146,7 @@ class Wav {
   /// lengths, they will be padded with zeros.
   Uint8List write() {
     // Calculate sizes etc.
-    final bitsPerSample = [8, 16, 24, 32, 32, 64][format.index];
+    final bitsPerSample = format.bitsPerSample;
     final isFloat = format == WavFormat.float32 || format == WavFormat.float64;
     final bytesPerSample = bitsPerSample ~/ 8;
     final numChannels = channels.length;

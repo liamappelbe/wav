@@ -32,3 +32,8 @@ enum WavFormat {
   /// 64-bit float.
   float64,
 }
+
+extension WavFormatExtension on WavFormat {
+  int get bitsPerSample => [8, 16, 24, 32, 32, 64][index];
+  int get bytesPerSample => bitsPerSample ~/ 8;
+}
