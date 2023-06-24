@@ -14,10 +14,6 @@
 
 include: package:lints/recommended.yaml
 
-analyzer:
-  strong-mode:
-    implicit-casts: false
-
 linter:
   rules:
   - avoid_catching_errors
