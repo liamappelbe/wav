@@ -50,14 +50,7 @@ class WavBytesWriter {
   }
 
   SampleWriter getSampleWriter(WavFormat format) =>
-      [
-        writeS8,
-        writeS16,
-        writeS24,
-        writeS32,
-        writeF32,
-        writeF64
-      ][format.index];
+      [writeS8, writeS16, writeS24, writeS32, writeF32, writeF64][format.index];
 
   Uint8List takeBytes() => bytes.takeBytes();
 }
