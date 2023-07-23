@@ -47,4 +47,15 @@ void main() async {
   writeTest('32bit-stereo', WavFormat.pcm32bit);
   writeTest('float32-stereo', WavFormat.float32);
   writeTest('float64-stereo', WavFormat.float64);
+
+  test('If channels are different lengths, pad them with zeros', () {
+    final channels = [
+      Float64List.fromList([1, 1, 1, 1, 1, 1]),
+      Float64List.fromList([-1, -1, -1, -1]),
+    ];
+    final buf = (BytesBuilder()
+          ..add([255, 0, 255, 0, 255, 0, 255, 0, 255, 128, 255, 128]))
+        .takeBytes();
+    expect(Raw.write(channels, WavFormat.pcm8bit), buf);
+  });
 }
