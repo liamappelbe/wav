@@ -38,7 +38,7 @@ void main() async {
   readTest('8bit-stereo', WavFormat.pcm8bit, 2, 8);
   readTest('16bit-stereo', WavFormat.pcm16bit, 2, 16);
   readTest('24bit-stereo', WavFormat.pcm24bit, 2, 20);
-  readTest('32bit-stereo', WavFormat.pcm32bit, 2, 26);
+  readTest('32bit-stereo', WavFormat.pcm32bit, 2, 32);
   readTest('float32-stereo', WavFormat.float32, 2, 26);
-  readTest('float64-stereo', WavFormat.float64, 2, 26);
+  readTest('float64-stereo', WavFormat.float64, 2, 52);
 }
