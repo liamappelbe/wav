@@ -51,7 +51,7 @@ class WavBytesReader {
   int readU16() => readUint16();
   int readU24() => readU8() + 0x100 * readU16();
   int readU32() => readUint32();
-  double u2f(int x, int b) => (x / WavUtils.rScale(b)) - 1;
+  double u2f(int x, int b) => (x / WavUtils.readScale(b)) - 1;
 
   double readS8() => u2f(readU8(), 8);
   double readS16() => u2f(WavUtils.fold(readU16(), 16), 16);
