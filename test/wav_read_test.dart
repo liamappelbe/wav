@@ -28,7 +28,6 @@ void readTest(String name, WavFormat format, int bitsOfAccuracy) {
     expect(wav.channels[0].length, 101);
     expect(wav.channels[1].length, 101);
     expect(wav.duration, 0.012625);
-    print('${wav.channels[0].sublist(0, 10)}');
     for (int i = 0; i < wav.channels[0].length; ++i) {
       final t = i * 2 * math.pi * 400 / 8000;
       expect(wav.channels[0][i], closeTo(math.sin(t), epsilon));

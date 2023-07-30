@@ -20,12 +20,11 @@ import 'package:wav/wav_types.dart';
 void readTest(String name, WavFormat format, int channels, int bitsOfAccuracy) {
   test('Read $name', () async {
     final filename = 'test/400Hz-$name.raw';
-    final raw = await Raw.readFile(filename, channels, format);
+    final raw = await readRawAudioFile(filename, channels, format);
     final epsilon = math.pow(0.5, bitsOfAccuracy - 1);
     expect(raw.length, 2);
     expect(raw[0].length, 101);
     expect(raw[1].length, 101);
-    print('${raw[0].sublist(0, 10)}');
     for (int i = 0; i < raw[0].length; ++i) {
       final t = i * 2 * math.pi * 400 / 8000;
       expect(raw[0][i], closeTo(math.sin(t), epsilon));

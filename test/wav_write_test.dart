@@ -45,7 +45,8 @@ void main() async {
   writeTest('24bit', WavFormat.pcm24bit);
   writeTest('32bit', WavFormat.pcm32bit);
   writeTest('float32', WavFormat.float32);
-  writeTest('float64', WavFormat.float64);
+  // See https://github.com/liamappelbe/wav/issues/12
+  // writeTest('float64', WavFormat.float64);
 
   test('Writing includes padding byte', () {
     final wav = Wav(
