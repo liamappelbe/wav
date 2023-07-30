@@ -13,7 +13,7 @@
 // limitations under the License.
 
 class WavUtils {
-  /// Returnst the closest number to [x] int the range [0, y].
+  /// Returns the closest number to [x] int the range [0, y].
   static int clamp(int x, int y) => x < 0
       ? 0
       : x > y
