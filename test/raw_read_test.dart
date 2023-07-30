@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:wav/raw_file.dart';
 import 'package:wav/wav_types.dart';
@@ -30,6 +31,14 @@ void readTest(String name, WavFormat format, int channels, int bitsOfAccuracy) {
       expect(raw[0][i], closeTo(math.sin(t), epsilon));
       expect(raw[1][i], closeTo(math.cos(t), epsilon));
     }
+  });
+
+  test('readRawAudio throws on inconsistent file size', () {
+    final bytes = Uint8List.fromList([0, 1, 2]);
+    expect(
+      () => readRawAudio(bytes, 2, WavFormat.pcm16bit),
+      throwsA(isA<Exception>()),
+    );
   });
 }
 

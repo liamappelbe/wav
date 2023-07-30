@@ -58,4 +58,14 @@ void main() async {
         .takeBytes();
     expect(writeRawAudio(channels, WavFormat.pcm8bit), buf);
   });
+
+  test('Writing includes padding byte', () {
+    final channels = [
+      Float64List.fromList([1, -1, 1, -1, 1, -1, 1, -1, 1])
+    ];
+    final buf = (BytesBuilder()
+          ..add([255, 0, 255, 0, 255, 0, 255, 0, 255, 0])) // Padded to 10.
+        .takeBytes();
+    expect(writeRawAudio(channels, WavFormat.pcm8bit), buf);
+  });
 }
