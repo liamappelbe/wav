@@ -16,9 +16,9 @@ import 'package:test/test.dart';
 import 'package:wav/wav_utils.dart';
 
 void main() async {
-test('clamp returns value within range', () {
-  expect(WavUtils.clamp(-1, 10), 0);
-  expect(WavUtils.clamp(5, 10), 5); 
-  expect(WavUtils.clamp(15, 10), 10);
-});
+  test('clamp returns value within range', () {
+    expect(WavUtils.clamp(-1, 10), 0);
+    expect(WavUtils.clamp(5, 10), 5);
+    expect(WavUtils.clamp(15, 10), 10);
+  });
 }
