@@ -32,7 +32,7 @@ class WavBytesWriter {
           ? y
           : x;
   int f2u(double x, int b) =>
-      clamp(((x + 1) * WavUtils.wScale(b)).floor(), (1 << b) - 1);
+      clamp(((x + 1) * WavUtils.writeScale(b)).floor(), (1 << b) - 1);
   BytesBuilder writeS8(double x) => writeU8(f2u(x, 8));
   BytesBuilder writeS16(double x) => writeU16(WavUtils.fold(f2u(x, 16), 16));
   BytesBuilder writeS24(double x) => writeU24(WavUtils.fold(f2u(x, 24), 24));

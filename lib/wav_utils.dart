@@ -13,9 +13,27 @@
 // limitations under the License.
 
 class WavUtils {
-  // [0, 2] => [0, 2 ^ bits - 1]
-  static double wScale(int bits) => (1 << (bits - 1)) * 1.0;
-  static double rScale(int bits) => wScale(bits) - 0.5;
+  /// Returns the closest number to [x] int the range [0, y].
+  static int clamp(int x, int y) => x < 0
+      ? 0
+      : x > y
+          ? y
+          : x;
+
+  /// When writing the WAV file using any of the formats that store audio as
+  /// an integer, this scaling factor can be used to map the floating point
+  /// representation of audio amplitude (a value between -1.0 and 1.0) to the
+  /// range of integers.
+  ///
+  /// For example, using 16 bits per sample, the range of integers is
+  /// -1 * 2 ^ 15 to 2 ^ 15 - 1 and we use a scaling factor of 2 ^ 15 to map
+  /// our floating point amplitudes into this range.
+  static double writeScale(int bits) => (1 << (bits - 1)) * 1.0;
+
+  /// When reading integer format WAV files, we subtract 0.5 to account for
+  /// the asymetry in the range of integers (|int.min| ==  |int.max| + 1).
+  static double readScale(int bits) => writeScale(bits) - 0.5;
+
   static int fold(int x, int bits) => (x + (1 << (bits - 1))) % (1 << bits);
 
   // Chunk is always padded to an even number of bytes.
