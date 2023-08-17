@@ -19,15 +19,19 @@ import 'package:test/test.dart';
 import 'package:wav/raw_file.dart';
 import 'package:wav/wav.dart';
 
-void writeTest(String name, WavFormat format) {
+import 'test_util.dart';
+
+void writeTest(String name, WavFormat format, int numChannels) {
   test('Write $format file', () async {
-    final filename = 'test/400Hz-$name.raw';
+    final filename = 'test/data/golden-$name.raw';
     final tempFilename = '$filename.temp';
-    final channels = [Float64List(101), Float64List(101)];
-    for (int i = 0; i < 101; ++i) {
-      final t = i * 2 * math.pi * 400 / 8000;
-      channels[0][i] = math.sin(t);
-      channels[1][i] = math.cos(t);
+    final rand = Rand();
+    final channels = <Float64List>[];
+    for (int i = 0; i < numChannels; ++i) {
+      channels.add(Float64List(101));
+      for (int j = 0; j < 101; ++j) {
+        channels[i][j] = rand.next();
+      }
     }
     await writeRawAudioFile(tempFilename, channels, format);
 
@@ -40,13 +44,18 @@ void writeTest(String name, WavFormat format) {
 }
 
 void main() async {
-  writeTest('8bit-stereo', WavFormat.pcm8bit);
-  writeTest('16bit-stereo', WavFormat.pcm16bit);
-  writeTest('24bit-stereo', WavFormat.pcm24bit);
-  writeTest('32bit-stereo', WavFormat.pcm32bit);
-  writeTest('float32-stereo', WavFormat.float32);
-  // See https://github.com/liamappelbe/wav/issues/12
-  // writeTest('float64-stereo', WavFormat.float64);
+  writeTest('8bit-mono', WavFormat.pcm8bit, 1);
+  writeTest('8bit-stereo', WavFormat.pcm8bit, 2);
+  writeTest('16bit-mono', WavFormat.pcm16bit, 1);
+  writeTest('16bit-stereo', WavFormat.pcm16bit, 2);
+  writeTest('24bit-mono', WavFormat.pcm24bit, 1);
+  writeTest('24bit-stereo', WavFormat.pcm24bit, 2);
+  writeTest('32bit-mono', WavFormat.pcm32bit, 1);
+  writeTest('32bit-stereo', WavFormat.pcm32bit, 2);
+  writeTest('float32-mono', WavFormat.float32, 1);
+  writeTest('float32-stereo', WavFormat.float32, 2);
+  writeTest('float64-mono', WavFormat.float64, 1);
+  writeTest('float64-stereo', WavFormat.float64, 2);
 
   test('If channels are different lengths, pad them with zeros', () {
     final channels = [
@@ -59,12 +68,12 @@ void main() async {
     expect(writeRawAudio(channels, WavFormat.pcm8bit), buf);
   });
 
-  test('Writing includes padding byte', () {
+  test('Writing does not include padding byte', () {
     final channels = [
       Float64List.fromList([1, -1, 1, -1, 1, -1, 1, -1, 1])
     ];
     final buf = (BytesBuilder()
-          ..add([255, 0, 255, 0, 255, 0, 255, 0, 255, 0])) // Padded to 10.
+          ..add([255, 0, 255, 0, 255, 0, 255, 0, 255])) // Not padded to 10.
         .takeBytes();
     expect(writeRawAudio(channels, WavFormat.pcm8bit), buf);
   });

@@ -97,10 +97,5 @@ Uint8List writeRawAudio(List<Float64List> channels, WavFormat format) {
     }
   }
 
-  final dataSize = numSamples * format.bytesPerSample * numChannels;
-  if (dataSize % 2 != 0) {
-    bytes.writeU8(0);
-  }
-
   return bytes.takeBytes();
 }
