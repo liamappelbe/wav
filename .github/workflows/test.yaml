@@ -52,11 +52,15 @@ jobs:
       if: always() && steps.install.outcome == 'success'
 
   test:
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        os: [ ubuntu-latest ]
         sdk: [ 2.14.0, stable, dev ]
+        include:
+          - os: macos-latest
+            sdk: stable
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: dart-lang/setup-dart@v1.0
       with:
