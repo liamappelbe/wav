@@ -69,7 +69,7 @@ void main() async {
 
   test('Writing does not include padding byte', () {
     final channels = [
-      Float64List.fromList([1, -1, 1, -1, 1, -1, 1, -1, 1])
+      Float64List.fromList([1, -1, 1, -1, 1, -1, 1, -1, 1]),
     ];
     final buf = (BytesBuilder()
           ..add([255, 0, 255, 0, 255, 0, 255, 0, 255])) // Not padded to 10.

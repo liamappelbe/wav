@@ -59,7 +59,7 @@ void main() async {
   test('Writing includes padding byte', () {
     final wav = Wav(
       [
-        Float64List.fromList([1, -1, 1, -1, 1, -1, 1, -1, 1])
+        Float64List.fromList([1, -1, 1, -1, 1, -1, 1, -1, 1]),
       ],
       100,
       WavFormat.pcm8bit,
@@ -114,7 +114,7 @@ void main() async {
   test('If samples exceed [-1, 1], clamp them', () {
     final wav = Wav(
       [
-        Float64List.fromList([-100, -1.1, 1.1, 100])
+        Float64List.fromList([-100, -1.1, 1.1, 100]),
       ],
       100,
       WavFormat.pcm8bit,
@@ -141,7 +141,7 @@ void main() async {
   test('Float formats do not clamp samples', () {
     final wav = Wav(
       [
-        Float64List.fromList([-100, 100])
+        Float64List.fromList([-100, 100]),
       ],
       100,
       WavFormat.float32,
