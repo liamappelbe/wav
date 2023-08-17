@@ -22,7 +22,7 @@ void main() async {
     expect(
       Wav(
         [
-          Float64List.fromList([1, -1, 0])
+          Float64List.fromList([1, -1, 0]),
         ],
         123,
       ).toMono(),
@@ -32,7 +32,7 @@ void main() async {
       Wav(
         [
           Float64List.fromList([1, -1, 0]),
-          Float64List.fromList([-1, -1, 1])
+          Float64List.fromList([-1, -1, 1]),
         ],
         123,
       ).toMono(),

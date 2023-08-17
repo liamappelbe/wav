@@ -17,32 +17,45 @@ import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:wav/wav.dart';
 
-void readTest(String name, WavFormat format, int bitsOfAccuracy) {
+import 'test_util.dart';
+
+void readTest(
+  String name,
+  WavFormat format,
+  int numChannels,
+  int bitsOfAccuracy,
+) {
   test('Read $format file', () async {
-    final filename = 'test/400Hz-$name.wav';
+    final filename = 'test/data/golden-$name.wav';
     final wav = await Wav.readFile(filename);
     final epsilon = math.pow(0.5, bitsOfAccuracy - 1);
     expect(wav.samplesPerSecond, 8000);
     expect(wav.format, format);
-    expect(wav.channels.length, 2);
-    expect(wav.channels[0].length, 101);
-    expect(wav.channels[1].length, 101);
+    expect(wav.channels.length, numChannels);
     expect(wav.duration, 0.012625);
-    for (int i = 0; i < wav.channels[0].length; ++i) {
-      final t = i * 2 * math.pi * 400 / 8000;
-      expect(wav.channels[0][i], closeTo(math.sin(t), epsilon));
-      expect(wav.channels[1][i], closeTo(math.cos(t), epsilon));
+    final rand = Rand();
+    for (int i = 0; i < numChannels; ++i) {
+      expect(wav.channels[i].length, 101);
+      for (int j = 0; j < 101; ++j) {
+        expect(wav.channels[i][j], closeTo(rand.next(), epsilon));
+      }
     }
   });
 }
 
 void main() async {
-  readTest('8bit', WavFormat.pcm8bit, 8);
-  readTest('16bit', WavFormat.pcm16bit, 16);
-  readTest('24bit', WavFormat.pcm24bit, 24);
-  readTest('32bit', WavFormat.pcm32bit, 32);
-  readTest('float32', WavFormat.float32, 26);
-  readTest('float64', WavFormat.float64, 52);
+  readTest('8bit-mono', WavFormat.pcm8bit, 1, 8);
+  readTest('8bit-stereo', WavFormat.pcm8bit, 2, 8);
+  readTest('16bit-mono', WavFormat.pcm16bit, 1, 16);
+  readTest('16bit-stereo', WavFormat.pcm16bit, 2, 16);
+  readTest('24bit-mono', WavFormat.pcm24bit, 1, 24);
+  readTest('24bit-stereo', WavFormat.pcm24bit, 2, 24);
+  readTest('32bit-mono', WavFormat.pcm32bit, 1, 32);
+  readTest('32bit-stereo', WavFormat.pcm32bit, 2, 32);
+  readTest('float32-mono', WavFormat.float32, 1, 26);
+  readTest('float32-stereo', WavFormat.float32, 2, 26);
+  readTest('float64-mono', WavFormat.float64, 1, 52);
+  readTest('float64-stereo', WavFormat.float64, 2, 52);
 
   test('Reading skips unknown chunks', () {
     final buf = (BytesBuilder()
