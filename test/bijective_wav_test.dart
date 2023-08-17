@@ -13,19 +13,21 @@
 // limitations under the License.
 
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:wav/wav.dart';
 
-void bijectiveTest(String name, WavFormat format) {
+import 'test_util.dart';
+
+void bijectiveTest(String name, WavFormat format, int numChannels) {
   test('Reading and writing $format file is bijective', () async {
-    final rand = math.Random(1557892);
     final tempFilename = 'test/bijective-$name.wav.temp';
-    final channels = [Float64List(1392), Float64List(1392)];
-    for (int i = 0; i < 1392; ++i) {
-      for (int j = 0; j < 2; ++j) {
-        channels[j][i] = 2 * rand.nextDouble() - 1;
+    final rand = Rand();
+    final channels = <Float64List>[];
+    for (int i = 0; i < numChannels; ++i) {
+      channels.add(Float64List(12345));
+      for (int j = 0; j < 12345; ++j) {
+        channels[i][j] = rand.next();
       }
     }
     final wavBefore = Wav(channels, 46310, format);
@@ -41,10 +43,16 @@ void bijectiveTest(String name, WavFormat format) {
 }
 
 void main() async {
-  bijectiveTest('8bit', WavFormat.pcm8bit);
-  bijectiveTest('16bit', WavFormat.pcm16bit);
-  bijectiveTest('24bit', WavFormat.pcm24bit);
-  bijectiveTest('32bit', WavFormat.pcm32bit);
-  bijectiveTest('float32', WavFormat.float32);
-  bijectiveTest('float64', WavFormat.float64);
+  bijectiveTest('8bit-mono', WavFormat.pcm8bit, 1);
+  bijectiveTest('8bit-stereo', WavFormat.pcm8bit, 2);
+  bijectiveTest('16bit-mono', WavFormat.pcm16bit, 1);
+  bijectiveTest('16bit-stereo', WavFormat.pcm16bit, 2);
+  bijectiveTest('24bit-mono', WavFormat.pcm24bit, 1);
+  bijectiveTest('24bit-stereo', WavFormat.pcm24bit, 2);
+  bijectiveTest('32bit-mono', WavFormat.pcm32bit, 1);
+  bijectiveTest('32bit-stereo', WavFormat.pcm32bit, 2);
+  bijectiveTest('float32-mono', WavFormat.float32, 1);
+  bijectiveTest('float32-stereo', WavFormat.float32, 2);
+  bijectiveTest('float64-mono', WavFormat.float64, 1);
+  bijectiveTest('float64-stereo', WavFormat.float64, 2);
 }

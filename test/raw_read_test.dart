@@ -20,7 +20,12 @@ import 'package:wav/wav_types.dart';
 
 import 'test_util.dart';
 
-void readTest(String name, WavFormat format, int numChannels, int bitsOfAccuracy) {
+void readTest(
+  String name,
+  WavFormat format,
+  int numChannels,
+  int bitsOfAccuracy,
+) {
   test('Read $name', () async {
     final filename = 'test/data/golden-$name.raw';
     final raw = await readRawAudioFile(filename, numChannels, format);

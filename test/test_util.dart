@@ -22,8 +22,6 @@ class Rand {
 
   int _x = 0x811c9dc5;
 
-  Rand() {}
-
   double next() {
     final x = _x;
     _x *= _prime;
