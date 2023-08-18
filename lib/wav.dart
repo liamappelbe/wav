@@ -13,4 +13,4 @@
 // limitations under the License.
 
 export 'wav_file.dart';
-export 'wav_types.dart';
+export 'wav_format.dart';

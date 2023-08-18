@@ -14,82 +14,90 @@
 
 import 'dart:typed_data';
 
-import 'wav_types.dart';
-import 'wav_utils.dart';
+import 'util.dart';
+import 'wav_format.dart';
 
 /// Utility class to incrementally read through a series of bytes, interpreting
-/// byte combinations as little endian (used for Wav files)
+/// byte combinations as little endian ints and floats etc. Every read operation
+/// moves the read head forward by the corresponding number of bytes.
 class WavBytesReader {
-  final Uint8List bytes;
-  int p;
+  final Uint8List _bytes;
+  int _p = 0;
 
-  WavBytesReader(
-    this.bytes, {
-    this.p = 0,
-  });
+  /// Constructs a [WavBytesReader].
+  WavBytesReader(this._bytes);
 
+  /// Skip forward [n] bytes.
   void skip(int n) {
-    p += n;
-    if (p > bytes.length) {
+    _p += n;
+    if (_p > _bytes.length) {
       throw FormatException('WAV is corrupted, or not a WAV file.');
     }
   }
 
-  ByteData read(int n) {
-    final p0 = p;
+  ByteData _read(int n) {
+    final p0 = _p;
     skip(n);
-    return ByteData.sublistView(bytes, p0, p);
+    return ByteData.sublistView(_bytes, p0, _p);
   }
 
-  int readUint8() => read(1).getUint8(0);
-  int readUint16() => read(2).getUint16(0, Endian.little);
-  int readUint32() => read(4).getUint32(0, Endian.little);
-  double readFloat32() => read(4).getFloat32(0, Endian.little);
-  double readFloat64() => read(8).getFloat64(0, Endian.little);
+  /// Reads a Uint8 from the buffer.
+  int readUint8() => _read(1).getUint8(0);
 
-  int readU8() => readUint8();
-  int readU16() => readUint16();
-  int readU24() => readU8() + 0x100 * readU16();
-  int readU32() => readUint32();
-  double u2f(int x, int b) => (x / WavUtils.readScale(b)) - 1;
+  /// Reads a Uint16 from the buffer.
+  int readUint16() => _read(2).getUint16(0, Endian.little);
 
-  double readS8() => u2f(readU8(), 8);
-  double readS16() => u2f(WavUtils.fold(readU16(), 16), 16);
-  double readS24() => u2f(WavUtils.fold(readU24(), 24), 24);
-  double readS32() => u2f(WavUtils.fold(readU32(), 32), 32);
-  double readF32() => readFloat32();
-  double readF64() => readFloat64();
+  /// Reads a Uint24 from the buffer.
+  int readUint24() => readUint8() + 0x100 * readUint16();
 
-  bool checkString(String s) {
-    return s ==
-        String.fromCharCodes(
-          Uint8List.sublistView(read(s.length)),
-        );
-  }
+  /// Reads a Uint32 from the buffer.
+  int readUint32() => _read(4).getUint32(0, Endian.little);
 
+  bool _checkString(String s) =>
+      s ==
+      String.fromCharCodes(
+        Uint8List.sublistView(_read(s.length)),
+      );
+
+  /// Reads a string of the same length as [s], then checks that the read string
+  /// matches [s]. Throws a [FormatException] if they don't match. [s] must be
+  /// ASCII only.
   void assertString(String s) {
-    if (!checkString(s)) {
+    if (!_checkString(s)) {
       throw FormatException('WAV is corrupted, or not a WAV file.');
     }
   }
 
-  void findChunk(String s) {
-    while (!checkString(s)) {
-      final size = readU32();
-      skip(WavUtils.roundUp(size));
+  /// Reads RIFF chunks until one is found that has the given [identifier]. When
+  /// this function returns, the read head will either be just after the
+  /// [identifier] (about to read the size), or at the end of the buffer.
+  void findChunk(String identifier) {
+    while (!_checkString(identifier)) {
+      final size = readUint32();
+      skip(roundUpToEven(size));
     }
   }
 
+  double _readSample8bit() => intToSample(readUint8(), 8);
+  double _readSample16Bit() => intToSample(fold(readUint16(), 16), 16);
+  double _readSample24Bit() => intToSample(fold(readUint24(), 24), 24);
+  double _readSample32Bit() => intToSample(fold(readUint32(), 32), 32);
+  double _readSampleFloat32() => _read(4).getFloat32(0, Endian.little);
+  double _readSampleFloat64() => _read(8).getFloat64(0, Endian.little);
+
+  /// Returns a closure that reads samples of the given [format] from this
+  /// buffer. Calling these closures advances the read head of this buffer.
   SampleReader getSampleReader(WavFormat format) {
     return [
-      readS8,
-      readS16,
-      readS24,
-      readS32,
-      readF32,
-      readF64,
+      _readSample8bit,
+      _readSample16Bit,
+      _readSample24Bit,
+      _readSample32Bit,
+      _readSampleFloat32,
+      _readSampleFloat64,
     ][format.index];
   }
 }
 
+/// Reads a sample and returns it as a double, usually in the range [-1, 1].
 typedef SampleReader = double Function();

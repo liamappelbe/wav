@@ -14,11 +14,11 @@
 
 import 'dart:typed_data';
 
+import 'util.dart';
 import 'wav_bytes_reader.dart';
 import 'wav_bytes_writer.dart';
+import 'wav_format.dart';
 import 'wav_no_io.dart' if (dart.library.io) 'wav_io.dart';
-import 'wav_types.dart';
-import 'wav_utils.dart';
 
 /// A WAV file, containing audio, and metadata.
 class Wav {
@@ -85,23 +85,21 @@ class Wav {
   static Wav read(Uint8List bytes) {
     // Utils for reading.
     var byteReader = WavBytesReader(bytes)
-
-      // Read metadata.
       ..assertString(_kStrRiff)
-      ..readU32() // File size.
+      ..readUint32() // File size.
       ..assertString(_kStrWave)
       ..findChunk(_kStrFmt);
-    final fmtSize = WavUtils.roundUp(byteReader.readU32());
-    final formatCode = byteReader.readU16();
-    final numChannels = byteReader.readU16();
-    final samplesPerSecond = byteReader.readU32();
-    byteReader.readU32(); // Bytes per second.
-    final bytesPerSampleAllChannels = byteReader.readU16();
-    final bitsPerSample = byteReader.readU16();
+    final fmtSize = roundUpToEven(byteReader.readUint32());
+    final formatCode = byteReader.readUint16();
+    final numChannels = byteReader.readUint16();
+    final samplesPerSecond = byteReader.readUint32();
+    byteReader.readUint32(); // Bytes per second.
+    final bytesPerSampleAllChannels = byteReader.readUint16();
+    final bitsPerSample = byteReader.readUint16();
     if (fmtSize > _kFormatSize) byteReader.skip(fmtSize - _kFormatSize);
 
     byteReader.findChunk(_kStrData);
-    final dataSize = byteReader.readU32();
+    final dataSize = byteReader.readUint32();
     final numSamples = dataSize ~/ bytesPerSampleAllChannels;
     final channels = <Float64List>[];
     for (int i = 0; i < numChannels; ++i) {
@@ -157,7 +155,7 @@ class Wav {
     final bytesPerSampleAllChannels = bytesPerSample * numChannels;
     final dataSize = numSamples * bytesPerSampleAllChannels;
     final bytesPerSecond = bytesPerSampleAllChannels * samplesPerSecond;
-    var fileSize = _kFileSizeWithoutData + WavUtils.roundUp(dataSize);
+    var fileSize = _kFileSizeWithoutData + roundUpToEven(dataSize);
     if (isFloat) {
       fileSize += _kFloatFmtExtraSize;
     }
@@ -165,25 +163,25 @@ class Wav {
     // Write metadata.
     final bytes = WavBytesWriter()
       ..writeString(_kStrRiff)
-      ..writeU32(fileSize)
+      ..writeUint32(fileSize)
       ..writeString(_kStrWave)
       ..writeString(_kStrFmt)
-      ..writeU32(_kFormatSize)
-      ..writeU16(isFloat ? _kFloat : _kPCM)
-      ..writeU16(numChannels)
-      ..writeU32(samplesPerSecond)
-      ..writeU32(bytesPerSecond)
-      ..writeU16(bytesPerSampleAllChannels)
-      ..writeU16(bitsPerSample);
+      ..writeUint32(_kFormatSize)
+      ..writeUint16(isFloat ? _kFloat : _kPCM)
+      ..writeUint16(numChannels)
+      ..writeUint32(samplesPerSecond)
+      ..writeUint32(bytesPerSecond)
+      ..writeUint16(bytesPerSampleAllChannels)
+      ..writeUint16(bitsPerSample);
     if (isFloat) {
       bytes
         ..writeString(_kStrFact)
-        ..writeU32(_kFactSize)
-        ..writeU32(numSamples);
+        ..writeUint32(_kFactSize)
+        ..writeUint32(numSamples);
     }
     bytes
       ..writeString(_kStrData)
-      ..writeU32(dataSize);
+      ..writeUint32(dataSize);
 
     // Write samples.
     final writeSample = bytes.getSampleWriter(format);
@@ -194,7 +192,7 @@ class Wav {
       }
     }
     if (dataSize % 2 != 0) {
-      bytes.writeU8(0);
+      bytes.writeUint8(0);
     }
     return bytes.takeBytes();
   }

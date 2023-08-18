@@ -1,3 +1,8 @@
+## 1.3.0
+
+- Support raw audio files, which are essentially Wav files without their format
+  header (ie just the samples).
+
 ## 1.2.0
 
 - Added a duration method to Wav.

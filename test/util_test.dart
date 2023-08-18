@@ -14,6 +14,7 @@
 
 import 'dart:typed_data';
 import 'package:test/test.dart';
+import 'package:wav/util.dart';
 import 'package:wav/wav.dart';
 
 void main() async {
@@ -49,5 +50,11 @@ void main() async {
     expect(WavFormat.pcm32bit.index, 3);
     expect(WavFormat.float32.index, 4);
     expect(WavFormat.float64.index, 5);
+  });
+
+  test('clamp returns value within range', () {
+    expect(clamp(-1, 10), 0);
+    expect(clamp(5, 10), 5);
+    expect(clamp(15, 10), 10);
   });
 }
