@@ -52,9 +52,56 @@ void main() async {
     expect(WavFormat.float64.index, 5);
   });
 
-  test('clamp returns value within range', () {
+  test('clamp', () {
     expect(clamp(-1, 10), 0);
     expect(clamp(5, 10), 5);
     expect(clamp(15, 10), 10);
+  });
+
+  test('fold', () {
+    expect(fold(-1000, 8), 152);
+    expect(fold(-128, 8), 0);
+    expect(fold(-127, 8), 1);
+    expect(fold(-3, 8), 125);
+    expect(fold(0, 8), 128);
+    expect(fold(5, 8), 133);
+    expect(fold(127, 8), 255);
+    expect(fold(128, 8), 0);
+    expect(fold(129, 8), 1);
+    expect(fold(255, 8), 127);
+    expect(fold(256, 8), 128);
+    expect(fold(1000, 8), 104);
+  });
+
+  test('roundUpToEven', () {
+    expect(roundUpToEven(0), 0);
+    expect(roundUpToEven(1), 2);
+    expect(roundUpToEven(2), 2);
+    expect(roundUpToEven(3), 4);
+    expect(roundUpToEven(4), 4);
+    expect(roundUpToEven(1001), 1002);
+  });
+
+  test('sampleToInt', () {
+    const eps = 1e-6;
+
+    expect(sampleToInt(-1, 8), 0);
+    expect(sampleToInt(-1 + 1/128 - eps, 8), 0);
+    expect(sampleToInt(-1 + 1/128 + eps, 8), 1);
+
+    expect(sampleToInt(-1/128 - eps, 8), 126);
+    expect(sampleToInt(-1/128 + eps, 8), 127);
+    expect(sampleToInt(-eps, 8), 127);
+
+    expect(sampleToInt(eps, 8), 128);
+    expect(sampleToInt(1/128 - eps, 8), 128);
+    expect(sampleToInt(1/128 + eps, 8), 129);
+
+    expect(sampleToInt(1 - 1/128 - eps, 8), 254);
+    expect(sampleToInt(1 - 1/128 + eps, 8), 255);
+    expect(sampleToInt(1, 8), 255);
+  });
+
+  test('intToSample', () {
   });
 }
