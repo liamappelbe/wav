@@ -15,8 +15,8 @@
 import 'dart:typed_data';
 
 import 'util.dart';
-import 'wav_bytes_reader.dart';
-import 'wav_bytes_writer.dart';
+import 'bytes_reader.dart';
+import 'bytes_writer.dart';
 import 'wav_format.dart';
 import 'wav_no_io.dart' if (dart.library.io) 'wav_io.dart';
 
@@ -84,7 +84,7 @@ class Wav {
   /// Unrecognized metadata will be ignored.
   static Wav read(Uint8List bytes) {
     // Utils for reading.
-    var byteReader = WavBytesReader(bytes)
+    var byteReader = BytesReader(bytes)
       ..assertString(_kStrRiff)
       ..readUint32() // File size.
       ..assertString(_kStrWave)
@@ -161,7 +161,7 @@ class Wav {
     }
 
     // Write metadata.
-    final bytes = WavBytesWriter()
+    final bytes = BytesWriter()
       ..writeString(_kStrRiff)
       ..writeUint32(fileSize)
       ..writeString(_kStrWave)

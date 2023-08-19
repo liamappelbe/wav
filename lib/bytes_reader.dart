@@ -20,12 +20,12 @@ import 'wav_format.dart';
 /// Utility class to incrementally read through a series of bytes, interpreting
 /// byte combinations as little endian ints and floats etc. Every read operation
 /// moves the read head forward by the corresponding number of bytes.
-class WavBytesReader {
+class BytesReader {
   final Uint8List _bytes;
   int _p = 0;
 
-  /// Constructs a [WavBytesReader].
-  WavBytesReader(this._bytes);
+  /// Constructs a [BytesReader].
+  BytesReader(this._bytes);
 
   /// Skip forward [n] bytes.
   void skip(int n) {

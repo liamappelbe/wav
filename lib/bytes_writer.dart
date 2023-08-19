@@ -19,7 +19,7 @@ import 'wav_format.dart';
 
 /// Utility class to construct a byte buffer by writing little endian ints and
 /// floats etc. Every write operation appends to the end of the buffer.
-class WavBytesWriter {
+class BytesWriter {
   final _bytes = BytesBuilder();
 
   /// Writes a Uint8 to the buffer.

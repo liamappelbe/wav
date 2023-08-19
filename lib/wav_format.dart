@@ -14,16 +14,16 @@
 
 /// The supported WAV formats.
 enum WavFormat {
-  /// 8-bit PCM.
+  /// 8-bit unsigned PCM.
   pcm8bit,
 
-  /// 16-bit PCM.
+  /// 16-bit signed PCM.
   pcm16bit,
 
-  /// 24-bit PCM.
+  /// 24-bit signed PCM.
   pcm24bit,
 
-  /// 32-bit PCM.
+  /// 32-bit signed PCM.
   pcm32bit,
 
   /// 32-bit float.

@@ -20,7 +20,8 @@ int clamp(int x, int y) => x < 0
         : x;
 
 /// Shifts int [x] of bit width [bits] up by half the total range, then wraps
-/// any overflowing values around to maintain the bit width.
+/// any overflowing values around to maintain the bit width. This is used to
+/// convert between signed and unsigned PCM.
 int fold(int x, int bits) => (x + (1 << (bits - 1))) % (1 << bits);
 
 /// Rounds [x] up to the nearest even number.
@@ -29,8 +30,8 @@ int roundUpToEven(int x) => x + (x % 2);
 double _writeScale(int bits) => (1 << (bits - 1)) * 1.0;
 double _readScale(int bits) => _writeScale(bits) - 0.5;
 
-/// Converts an audio sample [x] in the range [-1, 1] to an integer of bit width
-/// [bits].
+/// Converts an audio sample [x] in the range [-1, 1] to an unsigned integer of
+/// bit width [bits].
 int sampleToInt(double x, int bits) =>
     clamp(((x + 1) * _writeScale(bits)).floor(), (1 << bits) - 1);
 

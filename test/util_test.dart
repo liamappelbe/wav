@@ -84,24 +84,48 @@ void main() async {
 
   test('sampleToInt', () {
     const eps = 1e-6;
+    const step = 1.0 / 128;
 
     expect(sampleToInt(-1, 8), 0);
-    expect(sampleToInt(-1 + 1/128 - eps, 8), 0);
-    expect(sampleToInt(-1 + 1/128 + eps, 8), 1);
+    expect(sampleToInt(-1 + step - eps, 8), 0);
+    expect(sampleToInt(-1 + step + eps, 8), 1);
 
-    expect(sampleToInt(-1/128 - eps, 8), 126);
-    expect(sampleToInt(-1/128 + eps, 8), 127);
+    expect(sampleToInt(-step - eps, 8), 126);
+    expect(sampleToInt(-step + eps, 8), 127);
     expect(sampleToInt(-eps, 8), 127);
 
     expect(sampleToInt(eps, 8), 128);
-    expect(sampleToInt(1/128 - eps, 8), 128);
-    expect(sampleToInt(1/128 + eps, 8), 129);
+    expect(sampleToInt(step - eps, 8), 128);
+    expect(sampleToInt(step + eps, 8), 129);
 
-    expect(sampleToInt(1 - 1/128 - eps, 8), 254);
-    expect(sampleToInt(1 - 1/128 + eps, 8), 255);
+    expect(sampleToInt(1 - step - eps, 8), 254);
+    expect(sampleToInt(1 - step + eps, 8), 255);
     expect(sampleToInt(1, 8), 255);
   });
 
   test('intToSample', () {
+    const eps = 1e-12;
+    const step = 1.0 / 127.5;
+
+    expect(intToSample(0, 8), closeTo(-1, eps));
+    expect(intToSample(1, 8), closeTo(-1 + step, eps));
+    expect(intToSample(127, 8), closeTo(-0.5 * step, eps));
+    expect(intToSample(128, 8), closeTo(0.5 * step, eps));
+    expect(intToSample(254, 8), closeTo(1 - step, eps));
+    expect(intToSample(255, 8), closeTo(1, eps));
+  });
+
+  test('intToSample bijective with sampleToInt', () {
+    for (int i = 0; i < 255; ++i) {
+      expect(sampleToInt(intToSample(i, 8), 8), i);
+    }
+  });
+
+  test('sampleToInt bijective with intToSample', () {
+    const eps = 1e-12;
+    for (int i = 0; i < 256; ++i) {
+      final x = 2.0 * i / 255.0 - 1.0;
+      expect(intToSample(sampleToInt(x, 8), 8), closeTo(x, eps));
+    }
   });
 }

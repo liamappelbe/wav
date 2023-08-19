@@ -14,8 +14,8 @@
 
 import 'dart:typed_data';
 
-import 'wav_bytes_reader.dart';
-import 'wav_bytes_writer.dart';
+import 'bytes_reader.dart';
+import 'bytes_writer.dart';
 import 'wav_format.dart';
 import 'wav_no_io.dart' if (dart.library.io) 'wav_io.dart';
 
@@ -59,7 +59,7 @@ List<Float64List> readRawAudio(
   }
 
   // Read samples.
-  final byteReader = WavBytesReader(bytes);
+  final byteReader = BytesReader(bytes);
   final readSample = byteReader.getSampleReader(format);
   for (int i = 0; i < numSamples; ++i) {
     for (int j = 0; j < numChannels; ++j) {
@@ -93,7 +93,7 @@ Uint8List writeRawAudio(List<Float64List> channels, WavFormat format) {
   }
 
   // Write samples.
-  final bytes = WavBytesWriter();
+  final bytes = BytesWriter();
   final writeSample = bytes.getSampleWriter(format);
   for (int i = 0; i < numSamples; ++i) {
     for (int j = 0; j < numChannels; ++j) {
