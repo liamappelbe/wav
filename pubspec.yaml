@@ -15,7 +15,8 @@
 name: wav
 version: 1.3.0
 description: >
-  Super simple pure Dart package for reading and writing WAV files.
+  Super simple pure Dart package for reading and writing WAV and raw audio
+  files.
 repository: https://github.com/liamappelbe/wav
 
 environment:
