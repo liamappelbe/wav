@@ -14,9 +14,9 @@
 
 import 'dart:typed_data';
 
-import 'util.dart';
 import 'bytes_reader.dart';
 import 'bytes_writer.dart';
+import 'util.dart';
 import 'wav_format.dart';
 import 'wav_no_io.dart' if (dart.library.io) 'wav_io.dart';
 
