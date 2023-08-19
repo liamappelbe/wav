@@ -16,7 +16,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:wav/raw_file.dart';
-import 'package:wav/wav_types.dart';
+import 'package:wav/wav_format.dart';
 
 import 'test_util.dart';
 

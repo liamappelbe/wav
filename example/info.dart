@@ -1,4 +1,4 @@
-// Copyright 2022 The wav authors
+// Copyright 2023 The wav authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,28 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// The supported WAV formats.
-enum WavFormat {
-  /// 8-bit PCM.
-  pcm8bit,
+import 'package:wav/wav.dart';
 
-  /// 16-bit PCM.
-  pcm16bit,
+void main(List<String> argv) async {
+  if (argv.length != 1) {
+    print('Wrong number of args. Usage:');
+    print('  dart run info.dart input.wav');
+    return;
+  }
 
-  /// 24-bit PCM.
-  pcm24bit,
-
-  /// 32-bit PCM.
-  pcm32bit,
-
-  /// 32-bit float.
-  float32,
-
-  /// 64-bit float.
-  float64,
-}
-
-extension WavFormatExtension on WavFormat {
-  int get bitsPerSample => [8, 16, 24, 32, 32, 64][index];
-  int get bytesPerSample => bitsPerSample ~/ 8;
+  final wav = await Wav.readFile(argv[0]);
+  print(argv[0]);
+  print('Format: ${wav.format}');
+  print('Channels: ${wav.channels.length}');
+  print('Sample rate: ${wav.samplesPerSecond} Hz');
+  print('Duration: ${wav.duration.toStringAsFixed(3)} sec');
 }

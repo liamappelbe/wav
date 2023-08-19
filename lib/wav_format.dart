@@ -12,13 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:test/test.dart';
-import 'package:wav/wav_utils.dart';
+/// The supported WAV formats.
+enum WavFormat {
+  /// 8-bit unsigned PCM.
+  pcm8bit,
 
-void main() async {
-  test('clamp returns value within range', () {
-    expect(WavUtils.clamp(-1, 10), 0);
-    expect(WavUtils.clamp(5, 10), 5);
-    expect(WavUtils.clamp(15, 10), 10);
-  });
+  /// 16-bit signed PCM.
+  pcm16bit,
+
+  /// 24-bit signed PCM.
+  pcm24bit,
+
+  /// 32-bit signed PCM.
+  pcm32bit,
+
+  /// 32-bit float.
+  float32,
+
+  /// 64-bit float.
+  float64,
+}
+
+/// Extension methods for [WavFormat].
+extension WavFormatExtension on WavFormat {
+  /// The number of bits per sample for this [WavFormat].
+  int get bitsPerSample => [8, 16, 24, 32, 32, 64][index];
+
+  /// The number of bytes per sample for this [WavFormat].
+  int get bytesPerSample => bitsPerSample ~/ 8;
 }

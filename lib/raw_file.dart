@@ -14,10 +14,10 @@
 
 import 'dart:typed_data';
 
-import 'wav_bytes_reader.dart';
-import 'wav_bytes_writer.dart';
+import 'bytes_reader.dart';
+import 'bytes_writer.dart';
+import 'wav_format.dart';
 import 'wav_no_io.dart' if (dart.library.io) 'wav_io.dart';
-import 'wav_types.dart';
 
 /// Reads raw audio data from a file.
 ///
@@ -31,8 +31,11 @@ Future<List<Float64List>> readRawAudioFile(
 
 /// Reads raw audio samples from a byte buffer.
 ///
-/// As the buffer won't contain metadata, the format and number of channels
-/// must be  must be known/specified as arguments.
+/// Raw audio files are essentially Wav files without a format header. The
+/// format header tells the reader important metadata like the number of
+/// channels and the sample format. As the input won't contain that metadata,
+/// the format and number of channels must be must be known by the user, and
+/// specified as arguments.
 List<Float64List> readRawAudio(
   Uint8List bytes,
   int numChannels,
@@ -56,7 +59,7 @@ List<Float64List> readRawAudio(
   }
 
   // Read samples.
-  final byteReader = WavBytesReader(bytes);
+  final byteReader = BytesReader(bytes);
   final readSample = byteReader.getSampleReader(format);
   for (int i = 0; i < numSamples; ++i) {
     for (int j = 0; j < numChannels; ++j) {
@@ -78,8 +81,9 @@ Future<void> writeRawAudioFile(
 
 /// Writes raw audio samples to a byte buffer.
 ///
-/// This will not write any meta-data to the buffer (bits per sample,
-/// number of channels or sample rate).
+/// Raw audio files are essentially Wav files without a format header. So this
+/// function will not write any metadata to the buffer (bits per sample, number
+/// of channels or sample rate).
 Uint8List writeRawAudio(List<Float64List> channels, WavFormat format) {
   // Calculate sizes etc.
   final numChannels = channels.length;
@@ -89,7 +93,7 @@ Uint8List writeRawAudio(List<Float64List> channels, WavFormat format) {
   }
 
   // Write samples.
-  final bytes = WavBytesWriter();
+  final bytes = BytesWriter();
   final writeSample = bytes.getSampleWriter(format);
   for (int i = 0; i < numSamples; ++i) {
     for (int j = 0; j < numChannels; ++j) {

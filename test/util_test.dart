@@ -14,6 +14,7 @@
 
 import 'dart:typed_data';
 import 'package:test/test.dart';
+import 'package:wav/util.dart';
 import 'package:wav/wav.dart';
 
 void main() async {
@@ -49,5 +50,82 @@ void main() async {
     expect(WavFormat.pcm32bit.index, 3);
     expect(WavFormat.float32.index, 4);
     expect(WavFormat.float64.index, 5);
+  });
+
+  test('clamp', () {
+    expect(clamp(-1, 10), 0);
+    expect(clamp(5, 10), 5);
+    expect(clamp(15, 10), 10);
+  });
+
+  test('fold', () {
+    expect(fold(-1000, 8), 152);
+    expect(fold(-128, 8), 0);
+    expect(fold(-127, 8), 1);
+    expect(fold(-3, 8), 125);
+    expect(fold(0, 8), 128);
+    expect(fold(5, 8), 133);
+    expect(fold(127, 8), 255);
+    expect(fold(128, 8), 0);
+    expect(fold(129, 8), 1);
+    expect(fold(255, 8), 127);
+    expect(fold(256, 8), 128);
+    expect(fold(1000, 8), 104);
+  });
+
+  test('roundUpToEven', () {
+    expect(roundUpToEven(0), 0);
+    expect(roundUpToEven(1), 2);
+    expect(roundUpToEven(2), 2);
+    expect(roundUpToEven(3), 4);
+    expect(roundUpToEven(4), 4);
+    expect(roundUpToEven(1001), 1002);
+  });
+
+  test('sampleToInt', () {
+    const eps = 1e-6;
+    const step = 1.0 / 128;
+
+    expect(sampleToInt(-1, 8), 0);
+    expect(sampleToInt(-1 + step - eps, 8), 0);
+    expect(sampleToInt(-1 + step + eps, 8), 1);
+
+    expect(sampleToInt(-step - eps, 8), 126);
+    expect(sampleToInt(-step + eps, 8), 127);
+    expect(sampleToInt(-eps, 8), 127);
+
+    expect(sampleToInt(eps, 8), 128);
+    expect(sampleToInt(step - eps, 8), 128);
+    expect(sampleToInt(step + eps, 8), 129);
+
+    expect(sampleToInt(1 - step - eps, 8), 254);
+    expect(sampleToInt(1 - step + eps, 8), 255);
+    expect(sampleToInt(1, 8), 255);
+  });
+
+  test('intToSample', () {
+    const eps = 1e-12;
+    const step = 1.0 / 127.5;
+
+    expect(intToSample(0, 8), closeTo(-1, eps));
+    expect(intToSample(1, 8), closeTo(-1 + step, eps));
+    expect(intToSample(127, 8), closeTo(-0.5 * step, eps));
+    expect(intToSample(128, 8), closeTo(0.5 * step, eps));
+    expect(intToSample(254, 8), closeTo(1 - step, eps));
+    expect(intToSample(255, 8), closeTo(1, eps));
+  });
+
+  test('intToSample bijective with sampleToInt', () {
+    for (int i = 0; i < 255; ++i) {
+      expect(sampleToInt(intToSample(i, 8), 8), i);
+    }
+  });
+
+  test('sampleToInt bijective with intToSample', () {
+    const eps = 1e-12;
+    for (int i = 0; i < 256; ++i) {
+      final x = 2.0 * i / 255.0 - 1.0;
+      expect(intToSample(sampleToInt(x, 8), 8), closeTo(x, eps));
+    }
   });
 }
