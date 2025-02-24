@@ -162,4 +162,15 @@ void main() async {
     expect(wav.channels.length, 1);
     expect(wav.channels[0], [1, -1]);
   });
+
+  test('Read iOS unprocessed wav file', () async {
+    final filename = 'test/data/ios-unprocessed-float32-mono.wav';
+    final wav = await Wav.readFile(filename);
+
+    expect(wav.samplesPerSecond, 48000);
+    expect(wav.format, WavFormat.float32);
+    expect(wav.channels.length, 1);
+
+    expect(wav.duration, 0.7);
+  });
 }

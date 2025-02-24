@@ -59,6 +59,7 @@ class Wav {
   static const _kFloatFmtExtraSize = 12;
   static const _kPCM = 1;
   static const _kFloat = 3;
+  static const _kWavExtensible = 65534;
   static const _kStrRiff = 'RIFF';
   static const _kStrWave = 'WAVE';
   static const _kStrFmt = 'fmt ';
@@ -72,6 +73,9 @@ class Wav {
       if (bitsPerSample == 24) return WavFormat.pcm24bit;
       if (bitsPerSample == 32) return WavFormat.pcm32bit;
     } else if (formatCode == _kFloat) {
+      if (bitsPerSample == 32) return WavFormat.float32;
+      if (bitsPerSample == 64) return WavFormat.float64;
+    } else if (formatCode == _kWavExtensible) {
       if (bitsPerSample == 32) return WavFormat.float32;
       if (bitsPerSample == 64) return WavFormat.float64;
     }
