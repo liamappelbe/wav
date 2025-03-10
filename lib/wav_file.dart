@@ -60,6 +60,7 @@ class Wav {
   static const _kPCM = 1;
   static const _kFloat = 3;
   static const _kWavExtensible = 65534;
+  static const _kExCbSize = 22;
   static const _kStrRiff = 'RIFF';
   static const _kStrWave = 'WAVE';
   static const _kStrFmt = 'fmt ';
@@ -73,9 +74,6 @@ class Wav {
       if (bitsPerSample == 24) return WavFormat.pcm24bit;
       if (bitsPerSample == 32) return WavFormat.pcm32bit;
     } else if (formatCode == _kFloat) {
-      if (bitsPerSample == 32) return WavFormat.float32;
-      if (bitsPerSample == 64) return WavFormat.float64;
-    } else if (formatCode == _kWavExtensible) {
       if (bitsPerSample == 32) return WavFormat.float32;
       if (bitsPerSample == 64) return WavFormat.float64;
     }
@@ -93,14 +91,45 @@ class Wav {
       ..readUint32() // File size.
       ..assertString(_kStrWave)
       ..findChunk(_kStrFmt);
+
     final fmtSize = roundUpToEven(byteReader.readUint32());
-    final formatCode = byteReader.readUint16();
+    var formatCode = byteReader.readUint16();
     final numChannels = byteReader.readUint16();
     final samplesPerSecond = byteReader.readUint32();
     byteReader.readUint32(); // Bytes per second.
     final bytesPerSampleAllChannels = byteReader.readUint16();
     final bitsPerSample = byteReader.readUint16();
-    if (fmtSize > _kFormatSize) byteReader.skip(fmtSize - _kFormatSize);
+
+    if (formatCode == _kWavExtensible) {
+      // Size of the extension
+      // 22 for wav extensible, 0 otherwise
+      final cbSize = byteReader.readUint16();
+
+      if (cbSize == _kExCbSize) {
+        final validBitsPerSample = byteReader.readUint16();
+        if (validBitsPerSample != bitsPerSample) {
+          throw FormatException(
+            'wValidBitsPerSample should match wBitsPerSample.',
+          );
+        }
+
+        // channel mask
+        byteReader.readUint32();
+
+        // The rest 16 bytes are the GUID including the data format code.
+        // The first two bytes are the data format code.
+        // We convert the extensible format into the subformat.
+        formatCode = byteReader.readUint16();
+
+        byteReader.skip(14);
+      } else {
+        throw FormatException(
+          'Extension size of WAVE_FORMAT_EXTENSIBLE should be $_kExCbSize',
+        );
+      }
+    } else if (fmtSize > _kFormatSize) {
+      byteReader.skip(fmtSize - _kFormatSize);
+    }
 
     byteReader.findChunk(_kStrData);
     final dataSize = byteReader.readUint32();
