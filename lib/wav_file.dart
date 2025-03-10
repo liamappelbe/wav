@@ -109,7 +109,7 @@ class Wav {
         final validBitsPerSample = byteReader.readUint16();
         if (validBitsPerSample != bitsPerSample) {
           throw FormatException(
-            'wValidBitsPerSample should match wBitsPerSample.',
+            'wValidBitsPerSample is different from wBitsPerSample',
           );
         }
 

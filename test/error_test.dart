@@ -312,4 +312,68 @@ void main() async {
       ),
     );
   });
+
+  test('Wrong extension size for extensible format', () {
+    final buf = (BytesBuilder()
+          ..add('RIFF'.codeUnits)
+          ..add([46, 0, 0, 0])
+          ..add('WAVE'.codeUnits)
+          ..add('fmt '.codeUnits)
+          ..add([16, 0, 0, 0])
+          ..add([254, 255])
+          ..add([1, 0])
+          ..add([100, 0, 0, 0])
+          ..add([100, 0, 0, 0])
+          ..add([1, 0])
+          ..add([8, 0])
+          ..add('data'.codeUnits)
+          ..add([8, 0, 0, 0])
+          ..add([255, 0, 255, 0, 255, 0, 255, 0]))
+        .takeBytes();
+    expect(
+      () => Wav.read(buf),
+      throwsA(
+        predicate(
+          (e) =>
+              e is FormatException &&
+              e.message ==
+                  'Extension size of WAVE_FORMAT_EXTENSIBLE should be 22',
+        ),
+      ),
+    );
+  });
+
+  test('Wrong valid bits per sample for extensible format', () {
+    final buf = (BytesBuilder()
+          ..add('RIFF'.codeUnits)
+          ..add([46, 0, 0, 0])
+          ..add('WAVE'.codeUnits)
+          ..add('fmt '.codeUnits)
+          ..add([16, 0, 0, 0])
+          ..add([254, 255])
+          ..add([1, 0])
+          ..add([100, 0, 0, 0])
+          ..add([100, 0, 0, 0])
+          ..add([1, 0])
+          ..add([16, 0])
+          ..add([22, 0])
+          ..add([8, 0])
+          ..add([4, 0, 0, 0])
+          ..add([3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+          ..add('data'.codeUnits)
+          ..add([8, 0, 0, 0])
+          ..add([255, 0, 255, 0, 255, 0, 255, 0]))
+        .takeBytes();
+    expect(
+      () => Wav.read(buf),
+      throwsA(
+        predicate(
+          (e) =>
+              e is FormatException &&
+              e.message ==
+                  'wValidBitsPerSample is different from wBitsPerSample',
+        ),
+      ),
+    );
+  });
 }
