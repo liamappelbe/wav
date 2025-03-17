@@ -369,9 +369,10 @@ void main() async {
       throwsA(
         predicate(
           (e) =>
-              e is FormatException &&
+              e is UnimplementedError &&
               e.message ==
-                  'wValidBitsPerSample is different from wBitsPerSample',
+                  'wValidBitsPerSample is different from wBitsPerSample.'
+                      ' Please file a bug on package:wav.',
         ),
       ),
     );

@@ -108,8 +108,9 @@ class Wav {
       if (cbSize == _kExCbSize) {
         final validBitsPerSample = byteReader.readUint16();
         if (validBitsPerSample != bitsPerSample) {
-          throw FormatException(
-            'wValidBitsPerSample is different from wBitsPerSample',
+          throw UnimplementedError(
+            'wValidBitsPerSample is different from wBitsPerSample.'
+            ' Please file a bug on package:wav.',
           );
         }
 
