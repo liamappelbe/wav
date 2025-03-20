@@ -10,6 +10,12 @@ Dart, with no dependencies.
 This package currently supports reading and writing 8/16/24/32 bit PCM, and
 32/64 bit float formats. Other formats can be added as needed (just file a bug).
 
+This package also supports WAVE_FORMAT_EXTENSIBLE, but only for reading.
+Extensible WAVs are essentially treated as ordinary WAV files, because
+wValidBitsPerSample and dwChannelMask are ignored. Please file a bug if you have
+a use case for either of these metadata fields, or for writing extensible WAV
+files.
+
 ## Usage
 
 ```dart

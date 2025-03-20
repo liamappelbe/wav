@@ -1,3 +1,7 @@
+## 1.4.0
+
+- Support WAVE_FORMAT_EXTENSIBLE for reading, but not for writing.
+
 ## 1.3.0
 
 - Support raw audio files, which are essentially Wav files without their format
