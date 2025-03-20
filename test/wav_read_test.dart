@@ -43,6 +43,44 @@ void readTest(
   });
 }
 
+void waveExtensibleReadTest(
+  String name,
+  WavFormat subFormat,
+  int bitsOfAccuracy,
+) {
+  test('Read $subFormat file', () async {
+    final filename = 'test/data/sine-$name-3channels.wav';
+    final wav = await Wav.readFile(filename);
+    expect(wav.samplesPerSecond, 8000);
+    expect(wav.format, subFormat);
+    expect(wav.channels.length, 3);
+    expect(wav.duration, 0.25);
+
+    final epsilon = math.pow(0.5, bitsOfAccuracy - 1);
+
+    for (int i = 0; i < 3; ++i) {
+      expect(wav.channels[i].length, 2000);
+
+      for (int j = 0; j < wav.channels[i].length; j++) {
+        expect(
+          wav.channels[i][j],
+          closeTo(
+            math.sin(
+              2 *
+                  math.pi *
+                  440.0 *
+                  (i + 1) *
+                  (j.toDouble() / wav.samplesPerSecond.toDouble()),
+            ),
+            epsilon,
+          ),
+          reason: 'Channel $i, sample $j',
+        );
+      }
+    }
+  });
+}
+
 void main() async {
   readTest('8bit-mono', WavFormat.pcm8bit, 1, 8);
   readTest('8bit-stereo', WavFormat.pcm8bit, 2, 8);
@@ -56,6 +94,13 @@ void main() async {
   readTest('float32-stereo', WavFormat.float32, 2, 26);
   readTest('float64-mono', WavFormat.float64, 1, 52);
   readTest('float64-stereo', WavFormat.float64, 2, 52);
+
+  waveExtensibleReadTest('8bit', WavFormat.pcm8bit, 8);
+  waveExtensibleReadTest('16bit', WavFormat.pcm16bit, 16);
+  waveExtensibleReadTest('24bit', WavFormat.pcm24bit, 24);
+  waveExtensibleReadTest('32bit', WavFormat.pcm32bit, 32);
+  waveExtensibleReadTest('float32', WavFormat.float32, 26);
+  waveExtensibleReadTest('float64', WavFormat.float64, 52);
 
   test('Reading skips unknown chunks', () {
     final buf = (BytesBuilder()
@@ -161,5 +206,16 @@ void main() async {
     expect(wav.samplesPerSecond, 100);
     expect(wav.channels.length, 1);
     expect(wav.channels[0], [1, -1]);
+  });
+
+  test('Read iOS unprocessed wav file', () async {
+    final filename = 'test/data/ios-unprocessed-float32-mono.wav';
+    final wav = await Wav.readFile(filename);
+
+    expect(wav.samplesPerSecond, 48000);
+    expect(wav.format, WavFormat.float32);
+    expect(wav.channels.length, 1);
+
+    expect(wav.duration, 0.7);
   });
 }
