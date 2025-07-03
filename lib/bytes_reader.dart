@@ -53,11 +53,11 @@ class BytesReader {
   /// Reads a Uint32 from the buffer.
   int readUint32() => _read(4).getUint32(0, Endian.little);
 
-  bool _checkString(String s) =>
-      s ==
-      String.fromCharCodes(
-        Uint8List.sublistView(_read(s.length)),
-      );
+  /// Reads a String from the buffer.
+  String readString(int length) =>
+      String.fromCharCodes(Uint8List.sublistView(_read(length)));
+
+  bool _checkString(String s) => s == readString(s.length);
 
   /// Reads a string of the same length as [s], then checks that the read string
   /// matches [s]. Throws a [FormatException] if they don't match. [s] must be
